@@ -18,26 +18,30 @@
 
 ## necessary libraries
 library(rtracklayer)
-library("RColorBrewer")
-library(GGally)
-library(gridExtra)
-#library(dplyr)
-#library(tidyr)
-#library(ggpubr)
+#library("RColorBrewer")
+#library(GGally)
+#library(gridExtra)
+library(dplyr)
+library(tidyr)
+library(ggpubr)
 
 # load example methMatrices
+#methMats<-readRDS("/Users/semple/Documents/MeisterLab/sequencingData/20181119_dSMFv002-4amp_N2-182/dSMFamplicon/methylation_calls/allSampleRelCoordMats_TSS.rds")
 #methMats<-readRDS("/Users/semple/Documents/MeisterLab/sequencingData/20181119_dSMFv002-4amp_N2-182/dSMFamplicon/methylation_calls/allSampleMergedMats_TSS.rds")
-#save(methMats, file="methMatrix/data/methMats.RData")
+#save(methMats, file="data/methMats.RData")
+#TSS<-readRDS("/Users/semple/Documents/MeisterLab/dSMF/PromoterPrimerDesign/usefulObjects/ampliconMaxTSSgr.RDS")
+#names(mcols(TSS))<-"ID"
+#save(TSS, file="data/TSSgr.RData")
 
 #' Extract matrices into a simple list
-#' 
-#' @param methMats A list of lists: list of samples containing list of methylation matrices 
+#'
+#' @param methMats A list of lists: list of samples containing list of methylation matrices
 #' (usually named by the genomic region they come from)
 #' @param regionName A vector containing the names of regions of interest (default is all regions)
 #' @param sampleName A vector containing the names of samples of interest (default is all samples)
-#' @return A simple, one level list of methylation matrices for the samples and regions of interest. 
+#' @return A simple, one level list of methylation matrices for the samples and regions of interest.
 #' Matrices will be named with both the sample and the region name joined by "__"
-#' @examples 
+#' @examples
 #' getMatrices(methMats)
 #' will return a simple list of all regions in all samples, changing the name of the matrices
 #' getMatrices(methMats,regionName="WBGene00009234")
@@ -71,7 +75,7 @@ getMatrices<-function(methMats,regionName=c(),sampleName=c()) {
 
 
 #' Merge multiple matrices into a single matrix
-#' 
+#'
 #' @param matList A list of matrices which have the same columns
 #' @return A single methylation matrix
 #' @export
@@ -86,7 +90,7 @@ rbindMatrixList<-function(matList) {
 
 
 #' Convert C position numbering from genomic to relative coordinates
-#' 
+#'
 #' @param mat A methylation matrix
 #' @param regionGR A genomicRanges object of the region relative to which the new coordinates are caclulated
 #' @param invert  A logical variable to indicate if the region should be inverted (e.g. if it is on the negative strand). Default: FALSE
@@ -113,12 +117,12 @@ getRelativeCoord<-function(mat,regionGR,invert=F){
 
 
 #' Change the anchor coordinate
-#' 
+#'
 #' @param mat A methylation matrix
-#' @param amchorCoord The coordinate which will be set as the 0 position for relative coordinates 
+#' @param amchorCoord The coordinate which will be set as the 0 position for relative coordinates
 #' (default=0)
 #' @return A methylation matrix in which the column names have been changed to indicate relative position
-#' with reference to the anchor coordinate. e.g. a 500bp matrix centered around the TSS can have its column 
+#' with reference to the anchor coordinate. e.g. a 500bp matrix centered around the TSS can have its column
 #' names changed from 0 to 500 range to -250 to 250 range by setting anchorCoord=250.
 #' @export
 changeAnchorCoord<-function(mat,anchorCoord=0) {
@@ -132,14 +136,31 @@ changeAnchorCoord<-function(mat,anchorCoord=0) {
 }
 
 
+getFullMatrices<-function(matList,winSize=500) {
+  newList<-lapply(matList,function(m) {
+    # create a matrix with winSize columns and one row per seq read
+    Cpos<-colnames(m)
+    withinRange<- -winSize/2<=as.numeric(Cpos) & winSize/2>=as.numeric(Cpos)
+    fullMat<-matrix(data=NaN,nrow=dim(m)[1],ncol=winSize)
+    colnames(fullMat)<-c(seq(-winSize/2,-1),seq(1,winSize/2))
+    fullMat[,Cpos[withinRange]]<-m[,withinRange]
+    return(fullMat)
+  })
+  names(newList)<-names(matList)
+  return(matList)
+}
+
+
+
+
 #' Convert C position numbering from genomic to relative coordinates for a list of matrices
-#' 
+#'
 #' @param matList A simple list of methylation matrices with names that match the regionGRs object
-#' @param regionGRs A genomicRanges object of the regions relative to which the new coordinates are caclulated 
+#' @param regionGRs A genomicRanges object of the regions relative to which the new coordinates are caclulated
 #' with a metadata column called "ID" containing names that match the methylation matrices in matList
-#' @param anchorCoord  The coordinate which will be set as the 0 position for relative coordinates 
+#' @param anchorCoord  The coordinate which will be set as the 0 position for relative coordinates
 #' (default=0)
-#' @return A list of methylation matrices that have been converted from abslute genomic coordinates 
+#' @return A list of methylation matrices that have been converted from abslute genomic coordinates
 #'  to relativepositions within the genomicRanges regionGRs. regionGRs on the negative strand will be flipped to be
 #'  in the forward orientation.
 #' @export
@@ -163,10 +184,10 @@ getRelativeCoordMats<-function(matList,regionGRs,anchorCoord=0) {
 
 
 #' Calculate methylation frequency at each position for metagene plots
-#' 
+#'
 #' @param matList A simple list of methylation matrices with names that match the regionsGRs object
-#' @param regionGRs A genomicRanges object of the regions for which aggregate methylation frequency 
-#' will be calculated. the object must contain a metadata column called "ID" containing names that 
+#' @param regionGRs A genomicRanges object of the regions for which aggregate methylation frequency
+#' will be calculated. the object must contain a metadata column called "ID" containing names that
 #' match the methylation matrices in matList
 #' @param minReads  The minimal number of reads a matrix must have in order to be used (default=50)
 #' @return A long form  dataframe with four columns: "position" is the C position within the genomic Ranges,
@@ -195,18 +216,18 @@ getMetaMethFreq<-function(matList,regionGRs,minReads=50) {
 
 
 #' Single molecule plot of a methylation matrix
-#' 
-#' @param mat A methylation matrix 
+#'
+#' @param mat A methylation matrix
 #' @param regionName The name of the region the matrix is taken from should match on of the IDs in regionGRs
 #' @param regionGRs A genomicRanges object which includes the region which the mat matrix provides the data for.
-#' The object must contain a metadata column called "ID" containing names that match the methylation 
+#' The object must contain a metadata column called "ID" containing names that match the methylation
 #' matrices in mat
 #' @param featureGRs  A genomicRanges object denoting features to be plotted such as the TSS
 #' @param myXlab  A label for the x axis (default is "CpG/GpC position")
-#' @param featureLabel A label for a feature you want to plot, such as the position of the TSS 
+#' @param featureLabel A label for a feature you want to plot, such as the position of the TSS
 #' (default="TSS)
 #' @param title A title for the plot (default will be the name of the region, the chr and strand on which
-#' the region is present) 
+#' the region is present)
 #' @param baseFontSize The base font for the plotting theme (default=12 works well for 4x plots per A4 page)
 #' @return A ggplot2 plot object
 #' @export
@@ -237,7 +258,7 @@ plotSingleMolecules<-function(mat,regionName,regionGRs,featureGRs,myXlab="CpG/Gp
     } else {
       df<-as.data.frame(mat[hc$order,])
     }
-    
+
     reads<-row.names(df)
     d<-tidyr::gather(df,key=position,value=methylation)
     d$molecules<-seq_along(reads)
@@ -249,22 +270,22 @@ plotSingleMolecules<-function(mat,regionName,regionGRs,featureGRs,myXlab="CpG/Gp
     p<-ggplot2::ggplot(d,aes(x=position,y=molecules,width=2)) +
       ggplot2::geom_tile(aes(width=6,fill=methylation),alpha=0.8) +
       ggplot2::scale_fill_manual(values=c("0"="black","1"="grey80"),na.translate=F,na.value="white",
-                        labels=c("protected","accessible"),name="dSMF") + 
+                        labels=c("protected","accessible"),name="dSMF") +
       ggplot2::theme_light(base_size=baseFontSize) +
       ggplot2::theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
             plot.title = element_text(face = "bold",hjust = 0.5),
             legend.position="bottom", legend.key.height = unit(0.1, "cm")) +
       ggplot2::ggtitle(title) +
-      ggplot2::xlab(myXlab) + 
-      ggplot2::ylab("Single molecules") + 
+      ggplot2::xlab(myXlab) +
+      ggplot2::ylab("Single molecules") +
       ggplot2::xlim(start(regionGR),end(regionGR)+10)
     if(length(featureGRs)>0) {
       p<-p+ggplot2::geom_linerange(aes(x=start(featGR), y=NULL, ymin=0, ymax=length(reads)+max(3,0.04*length(reads))),col="red") +
         ggplot2::annotate("segment", x = start(featGR), xend = start(featGR)+20*ifelse(strand(featGR)=="-",-1,1),
-                          y = length(reads)+max(3,0.04*length(reads)), yend =length(reads)+max(3,0.04*length(reads)), colour = "red",
-                          arrow=arrow(length = unit(0.3, "cm")), size=0.7) +
+                          y = length(reads)+max(3,0.04*length(reads)), yend =length(reads)+max(3,0.04*length(reads)),
+                          colour = "red", arrow=arrow(length = unit(0.3, "cm")), size=0.7) +
         ggplot2::annotate(geom="text", x=start(featGR), y=-max(2,0.03*length(reads)), label=featureLabel,color="red")
-      
+
     }
   } else {
     p<-NULL
@@ -275,18 +296,18 @@ plotSingleMolecules<-function(mat,regionName,regionGRs,featureGRs,myXlab="CpG/Gp
 
 
 #' Single molecule plot of a methylation matrix with average methylation frequency
-#' 
-#' @param mat A methylation matrix 
+#'
+#' @param mat A methylation matrix
 #' @param regionName The name of the region the matrix is taken from should match on of the IDs in regionGRs
 #' @param regionGRs A genomicRanges object which includes the region which the mat matrix provides the data for.
-#' The object must contain a metadata column called "ID" containing names that match the methylation 
+#' The object must contain a metadata column called "ID" containing names that match the methylation
 #' matrices in mat
 #' @param featureGRs  A genomicRanges object denoting features to be plotted such as the TSS
 #' @param myXlab  A label for the x axis (default is "CpG/GpC position")
-#' @param featureLabel A label for a feature you want to plot, such as the position of the TSS 
+#' @param featureLabel A label for a feature you want to plot, such as the position of the TSS
 #' (default="TSS)
 #' @param title A title for the plot (default will be the name of the region, the chr and strand on which
-#' the region is present) 
+#' the region is present)
 #' @param baseFontSize The base font for the plotting theme (default=11 works well for 4x plots per A4 page)
 #' @return A ggplot2 plot object
 #' @export
@@ -311,7 +332,7 @@ plotSingleMoleculesWithAvr<-function(mat,regionName,regionGRs,featureGRs,myXlab=
     } else {
       df<-as.data.frame(mat[hc$order,])
     }
-    
+
     reads<-row.names(df)
     d<-tidyr::gather(df,key=position,value=methylation)
     d$molecules<-seq_along(reads)
@@ -321,32 +342,32 @@ plotSingleMoleculesWithAvr<-function(mat,regionName,regionGRs,featureGRs,myXlab=
       title=paste0(regionName, ": ",seqnames(regionGR)," ",strand(regionGR),"ve strand")
     }
     dAvr<-data.frame(position=as.numeric(colnames(df)),dSMF=1-colSums(df,na.rm=T)/length(reads))
-    
-    p1<-ggplot2::ggplot(dAvr,aes(x=position,y=dSMF,group=1)) + 
+
+    p1<-ggplot2::ggplot(dAvr,aes(x=position,y=dSMF,group=1)) +
       ggplot2::geom_point()+
-      ggplot2::geom_line(size=1,show.legend=F) + 
+      ggplot2::geom_line(size=1,show.legend=F) +
       ggplot2::guides(fill=FALSE, color=FALSE) +
-      ggplot2::theme_light(base_size=baseFontSize) + 
+      ggplot2::theme_light(base_size=baseFontSize) +
       ggplot2::ylab("Mean dSMF") +
       ggplot2::theme(axis.title.x = element_blank(), axis.text.x = element_blank()) +
-      ggplot2::ylim(0,1) + 
+      ggplot2::ylim(0,1) +
       ggplot2::xlim(start(regionGR),end(regionGR)+20)
     if (length(featureGRs)>0) { # plot feature if present
       p1<-p1 + ggplot2::geom_linerange(aes(x=start(featGR), y=NULL, ymin=0, ymax=1),col="red",size=0.7) +
         ggplot2::annotate("segment", x = start(featGR), xend = start(featGR)+20*ifelse(strand(featGR)=="-",-1,1),
                           y = 1, yend = 1, colour = "red", size=0.7, arrow=arrow(length = unit(0.2, "cm")))
     }
-    
+
     p2<-ggplot2::ggplot(d,aes(x=position,y=molecules,width=2)) +
       ggplot2::geom_tile(aes(width=6,fill=methylation),alpha=0.8) +
       ggplot2::scale_fill_manual(values=c("0"="black","1"="grey80"),na.translate=F,na.value="white",
-                        labels=c("protected","accessible"),name="dSMF") + 
+                        labels=c("protected","accessible"),name="dSMF") +
       ggplot2::theme_light(base_size=baseFontSize) +
-      ggplot2::theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-                     plot.title = element_blank(),legend.position="bottom", 
+      ggplot2::theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+                     plot.title = element_blank(),legend.position="bottom",
                      legend.key.height = unit(0.1, "cm")) +
-      ggplot2::xlab(myXlab) + 
-      ggplot2::ylab("Single molecules") + 
+      ggplot2::xlab(myXlab) +
+      ggplot2::ylab("Single molecules") +
       ggplot2::xlim(start(regionGR),end(regionGR)+20)
     if (length(featureGRs)>0) {
       p2<-p2+ggplot2::geom_linerange(aes(x=start(featGR), y=NULL, ymin=0, ymax=length(reads)+max(3,0.04*length(reads))),col="red") +
