@@ -216,48 +216,12 @@ mGCgr<-matToGR(mGC,region)
 regGCCG<-IRanges::subsetByOverlaps(gnmgr,region)
 
 # use gnmgr subset to apply sum over mCG and mGC
-reads<-colnames(GenomicRanges::mcols(mCGgr))
-readName<-reads[1]
-n<-applyGRonGR1(regGCCG,mCGgr,reads,allNAs)
-g<-applyGRonGR1(regGCCG,mCGgr,reads,sum,na.rm=T)
-gr1=regGCCG
-gr2=mCGgr
-applyTo=reads
-fun=allNAs
+CGreads<-colnames(GenomicRanges::mcols(mCGgr))
+GCreads<-colnames(GenomicRanges::mcols(mGCgr))
+library(magrittr)
 
-g<-nanodsmf::applyGRonGR(regGCCG,mCGgr,readName,sum,na.rm=T)
-g1<-nanodsmf::applyGRonGR(regGCCG,mCGgr,readName,sum,na.rm=T)
-NAidx<-GenomicRanges::mcols(n)[,readName]
-GenomicRanges::mcols(g1)[NAidx,readName]<-NA
+cg<-nanodsmf::applyGRonGR(regGCCG,mCGgr,CGreads,sum,na.rm=T)
+gc<-nanodsmf::applyGRonGR(regGCCG,mGCgr,GCreads,sum,na.rm=T)
 
-gr1 <- GenomicRanges::GRanges("chr1", IRanges::IRanges(c(1,3,7), c(5,6,10),names=paste0("win", letters[1:3])),
-                              score=4:6,
-                              other=1:3)
-gr2 <- GenomicRanges::GRanges("chr1", IRanges::IRanges(c(1, 3, 8), c(1, 3, 8),names=paste0("dataID:", letters[1:3])),
-                              score=c(10,20,30),
-                              other=c(100,200,300))
-applyTo=c("score")
-applyGRonGR1(gr1,gr2,applyTo,fun=sum)
-applyGRonGR1(gr1,gr2,applyTo,fun=allNAs)
-
-
-
-
-
-
-applyGRonGR1<-function(gr1,gr2,applyTo,fun,...) {
-  newGR<-IRanges::subsetByOverlaps(gr1,gr2)
-  ol<-IRanges::findOverlaps(gr1,gr2)
-  grps<-S4Vectors::queryHits(ol)
-  dataCols<-tibble::as_tibble(cbind(S4Vectors::DataFrame(grps),
-                                as_tibble(GenomicRanges::mcols(gr2)[S4Vectors::subjectHits(ol),applyTo])))
-  colnames(dataCols)<-c("grps",applyTo)
-  newData<-dataCols %>% dplyr::group_by(grps) %>% dplyr::summarise_all(fun,...)
-  if (sum(!(applyTo %in% colnames(GenomicRanges::mcols(newGR))))==0) {
-    GenomicRanges::mcols(newGR)[,applyTo]<-newData[,applyTo]
-  } else {
-    GenomicRanges::mcols(newGR)<-cbind(GenomicRanges::mcols(newGR),newData)
-  }
-  return(newGR)
-}
+ol<-IRanges::findOverlaps(cg,gc)
 
