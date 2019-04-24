@@ -2,7 +2,7 @@ Package: methMatrix
 Title: Manipulate Lists of Methylation Matrices
 Version: 1.0
 Authors@R: c(person("Jennifer", "Semple", email = "jennifer.semple@izb.unibe.ch", role = c("aut", "cre")),
-  person("Arnaud","Krebs",role=c("aut"))
+  person("Arnaud","Krebs",role=c("aut")))
 Description: Various functions to manipulate lists of lists of methylation matrices output by the dSMF pipeline. Matrices can be selected, merged, renumbered to relative positions and padded with NAs for merging matrices from different genes.
 Depends: R (>= 3.5.1)
 License: GNU public licence

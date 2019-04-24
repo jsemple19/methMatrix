@@ -7,7 +7,7 @@
 getMatrices(methMats, regionName = c(), sampleName = c())
 }
 \arguments{
-\item{methMats}{A list of lists: list of samples containing list of methylation matrices 
+\item{methMats}{A list of lists: list of samples containing list of methylation matrices
 (usually named by the genomic region they come from)}
 
 \item{regionName}{A vector containing the names of regions of interest (default is all regions)}
@@ -15,7 +15,7 @@ getMatrices(methMats, regionName = c(), sampleName = c())
 \item{sampleName}{A vector containing the names of samples of interest (default is all samples)}
 }
 \value{
-A simple, one level list of methylation matrices for the samples and regions of interest. 
+A simple, one level list of methylation matrices for the samples and regions of interest.
 Matrices will be named with both the sample and the region name joined by "__"
 }
 \description{

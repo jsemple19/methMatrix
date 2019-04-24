@@ -9,12 +9,12 @@ changeAnchorCoord(mat, anchorCoord = 0)
 \arguments{
 \item{mat}{A methylation matrix}
 
-\item{amchorCoord}{The coordinate which will be set as the 0 position for relative coordinates 
+\item{amchorCoord}{The coordinate which will be set as the 0 position for relative coordinates
 (default=0)}
 }
 \value{
 A methylation matrix in which the column names have been changed to indicate relative position
-with reference to the anchor coordinate. e.g. a 500bp matrix centered around the TSS can have its column 
+with reference to the anchor coordinate. e.g. a 500bp matrix centered around the TSS can have its column
 names changed from 0 to 500 range to -250 to 250 range by setting anchorCoord=250.
 }
 \description{

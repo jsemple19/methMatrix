@@ -9,14 +9,14 @@ getRelativeCoordMats(matList, regionGRs, anchorCoord = 0)
 \arguments{
 \item{matList}{A simple list of methylation matrices with names that match the regionGRs object}
 
-\item{regionGRs}{A genomicRanges object of the regions relative to which the new coordinates are caclulated 
+\item{regionGRs}{A genomicRanges object of the regions relative to which the new coordinates are caclulated
 with a metadata column called "ID" containing names that match the methylation matrices in matList}
 
-\item{anchorCoord}{The coordinate which will be set as the 0 position for relative coordinates 
+\item{anchorCoord}{The coordinate which will be set as the 0 position for relative coordinates
 (default=0)}
 }
 \value{
-A list of methylation matrices that have been converted from abslute genomic coordinates 
+A list of methylation matrices that have been converted from abslute genomic coordinates
  to relativepositions within the genomicRanges regionGRs. regionGRs on the negative strand will be flipped to be
  in the forward orientation.
 }
