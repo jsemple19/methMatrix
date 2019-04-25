@@ -52,7 +52,7 @@ getReadMatrix<-function(bamFile,genomeFile,bedFile,region) {
   # use samtools mpileup to call C methylation
   tab<-system(paste0("samtools mpileup -f ",genomeFile," -l ",bedFile," -r ",region,
                 "  --output-QNAME ",bamFile),intern=T)
-  #convert output to data frame
+  # convert output to data frame
   tab<-lapply(tab,strsplit,"\t")
   tab<-lapply(1:length(tab),function(x){t(tab[[x]][[1]])})
   tab<-as.data.frame(do.call(rbind,tab),stringsAsFactors=F)
@@ -64,15 +64,14 @@ getReadMatrix<-function(bamFile,genomeFile,bedFile,region) {
   colnames(mat)<-allPos
   rownames(mat)<-allReads
   # scroll through tab to extract methylation values in strand aware way
-  #plusStrand<-tab[tab$ref=="c" | tab$ref=="C",]
-  #minusStrand<-tab[tab$ref=="g" | tab$ref=="G",]
-  #matchList<-stringr::str_locate_all(tab[,"matches"],"\\.")
-  for (line in 1:nrow(tab)) { #nrow(tab)
+  for (line in 1:nrow(tab)) {
     df<-pileupToMethStatus(tab[line,])
     mat[df$reads,df$pos]<-df$meth
   }
   return(mat)
 }
+
+
 
 #' Extract methylation calls from single line of pileup file
 #'
@@ -128,12 +127,12 @@ pileupToMethStatus<-function(pileupLine) {
   return(df)
 }
 
-#a dot stands for a match to the reference base on the forward strand,
-#a comma for a match on the reverse strand, a '>' or '<' for a reference skip,
-#`ACGTN' for a mismatch on the forward strand and
-#`acgtn' for a mismatch on the reverse strand.
-# `\\+[0-9]+[ACGTNacgtn]+' indicates there is an insertion between this reference position and the next reference position
-# `-[0-9]+[ACGTNacgtn]+' represents a deletion from the reference
+# a dot stands for a match to the reference base on the forward strand,
+# a comma for a match on the reverse strand, a '>' or '<' for a reference skip,
+# ACGTN for a mismatch on the forward strand and
+# acgtn for a mismatch on the reverse strand.
+# \\+[0-9]+[ACGTNacgtn]+ indicates there is an insertion between this reference position and the next reference position
+# -[0-9]+[ACGTNacgtn]+ represents a deletion from the reference
 
 # * does not add character
 # $ indicates end of read, it adds one character and should be removed
@@ -156,6 +155,8 @@ parseMatchString<-function(match) {
   return(match)
 }
 
+
+
 #' Convert methylation matrix to genomic ranges
 #'
 #' @param mat Methylation matrix with reads x Cposition
@@ -171,7 +172,6 @@ matToGR<-function(mat,gr) {
 
 
 #' Check if vector is only NAs
-#'
 #' @param vec Vector of values to be checked
 #' @examples
 #' allNAs(c(NA, NA, NA))
@@ -189,39 +189,84 @@ allNAs<-function(vec) {
 }
 
 
-genomeFile="/Users/semple/Documents/MeisterLab/GenomeVer/sequence/c_elegans.PRJNA13758.WS250.genomic.fa"
-bedFileCG="/Users/semple/Documents/MeisterLab/GenomeVer/sequence/c_elegans.PRJNA13758.WS250.genomic.CG.bed"
-bedFileGC="/Users/semple/Documents/MeisterLab/GenomeVer/sequence/c_elegans.PRJNA13758.WS250.genomic.GC.bed"
-bamFile="/Users/semple/Documents/MeisterLab/sequencingData/20190206_dSMFv016v020_N2gw_spike100pe/bwaMeth/test20190405/aln/dS16N2gw_20190206.noOL.bam"
-amplicons=readRDS("/Users/semple/Documents/MeisterLab/dSMF/PromoterPrimerDesign/usefulObjects/ampliconGR.RDS")
 
-#makeCGorGCbed(genomeFile,"CG")
-#makeCGorGCbed(genomeFile,"GC")
+#' Combine CG and GC methylation matrices
+#'
+#' Methylation matrices are tricky to merge because:
+#'
+#' 1. Forward and reverse reads will have methylation calls at different positions
+#' even if they are part of the same motif because the C is shifted by 1 between
+#' the two strands. Therefore we "destrand" the reads by averaging all methylation
+#' calls within the same motif (and ingoring NAs). The genomic positions in the final merged
+#' matrix will be on the position of the 1st bp of the motif for CG motifs and the genomic
+#' position of the 2nd bp of the motif for GC motifs.
+#'
+#' 2. GCG/CGC motifs will have methylation calls from three Cs and it is not clear
+#' whether the middle C should be part of one motif or the other. Therefore we consider
+#' such triplets as a single motif and average the methylation calls from all three Cs.
+#' The genomic position used in the final merged matrix will be that of the middle bp
+#' of the motif.
+#'
+#' 3. Longer GCGC/CGCG runs have multiple overlapping motifs layered within them. To deal
+#' with that we split these runs into 2-3bp motifs. If the length of the run is an even
+#' number, it is split into doublets and considered as simple CG or GC motifs. If the
+#' length of the run is an odd number, one triplet is created, and the rest is split into
+#' doublets. This creates a set of unique non-overlapping motifs in the genome that are either
+#' CG or GC 2bp motifs, or a GCG/CGC 2bp motif. This unique set is created before hand
+#' with the nanodsmf::findGenomeMotifs function and can be stored in a RDS file. Doublet
+#' and triplet motifs created from the run are treated the same as isolated doublet and triplet
+#' motifs, as described in points 1. and 2. above.
+#'
+#' @param matCG Methylation matrix (reads x positons) of C positions within CG motifs
+#' @param matGC Methylation matrix (reads x positons) of C positions within GC motifs
+#' @param regionGR GRanges object of region used to make methylation matrices
+#' @param gnmMotifGR GRanges object with all unique CG/GC/GCGorCGC motifs in genome
+#' @return Merged methylation matrix
+#' @export
+combineCGandGCmatrices<-function(matCG,matGC,regionGR,gnmMotifGR){
+  # convert matCG and matGC to genomic ranges with transposed matrix (positions x reads)
+  matCGgr<-matToGR(matCG,regionGR)
+  matGCgr<-matToGR(matGC,regionGR)
 
-region="I:10560-11095"
-genomeFile="/Users/semple/Documents/MeisterLab/GenomeVer/sequence/c_elegans.PRJNA13758.WS250.genomic.fa"
-region=nanodsmf::ucscToWbGR(amplicons[1])
-names(GenomicRanges::mcols(region))<-"ID"
-mCG<-getReadMatrix(bamFile,genomeFile,bedFileCG,region)
-mGC<-getReadMatrix(bamFile,genomeFile,bedFileGC,region)
+  #subset gnmMotifGR by regionGR to get motifs that should be present in the matrices
+  regGCCG<-IRanges::subsetByOverlaps(gnmMotifGR,regionGR)
 
-#gnmgr<-nanodsmf::findGenomeMotifs(genomeFile)
-gnmgr<-readRDS("/Users/semple/Documents/MeisterLab/GenomeVer/sequence/c_elegans.PRJNA13758.WS260.genomicCGGC_motifs.RDS")
+  # get vector of read names for each gr
+  CGreads<-colnames(GenomicRanges::mcols(matCGgr))
+  GCreads<-colnames(GenomicRanges::mcols(matGCgr))
 
-# convert mCG and mGC to genomic ranges with transposed matrix
-mCGgr<-matToGR(mCG,region)
-mGCgr<-matToGR(mGC,region)
+  # use gnmMotifGR subset to "destrand" CG and GC calls by summing positions within motifs
+  cg<-nanodsmf::applyGRonGR(regGCCG,matCGgr,CGreads,sum,na.rm=T)
+  gc<-nanodsmf::applyGRonGR(regGCCG,matGCgr,GCreads,sum,na.rm=T)
 
-#subset gnmgr by maxInterval
-regGCCG<-IRanges::subsetByOverlaps(gnmgr,region)
+  # find gr that overlap between cg and gc calls
+  ol<-IRanges::findOverlaps(cg,gc)
+  # find reads that are in both grs (GCGorCGC motifs)
+  idxCGinGC<-CGreads %in% GCreads
+  idxGCinCG<-GCreads %in% CGreads
+  # average values from both matrices at these overlapping sites (NAs are ignored, but
+  # kept if not real values is found)
+  m1<-as.matrix(GenomicRanges::mcols(cg)[S4Vectors::queryHits(ol),CGreads[idxCGinGC]])
+  m2<-as.matrix(GenomicRanges::mcols(gc)[S4Vectors::subjectHits(ol),GCreads[idxGCinCG]])
+  mAvr<-ifelse(is.na(m1), ifelse(is.na(m2), NA, m2), ifelse(is.na(m2), m1, (m1 + m2)/2))
+  GenomicRanges::mcols(cg)[S4Vectors::queryHits(ol),CGreads[idxCGinGC]]<-tibble::as_tibble(mAvr)
 
-# use gnmgr subset to apply sum over mCG and mGC
-CGreads<-colnames(GenomicRanges::mcols(mCGgr))
-GCreads<-colnames(GenomicRanges::mcols(mGCgr))
-library(magrittr)
+  # make nonoverlapping combined list
+  allGR<-c(cg,gc[!idxGCinCG])
+  # shrink gr to single bp
+  CG1bp<-resize(allGR[allGR$context=="HCG"],width=1,fix="start")
+  GC1bp<-resize(allGR[allGR$context=="GCH"],width=1,fix="end")
+  GCGorCGC1bp<-resize(allGR[allGR$context=="GCGorCGC"],width=1,fix="center")
+  # combine and sort
+  allGR<-sort(c(CG1bp,GC1bp,GCGorCGC1bp))
 
-cg<-nanodsmf::applyGRonGR(regGCCG,mCGgr,CGreads,sum,na.rm=T)
-gc<-nanodsmf::applyGRonGR(regGCCG,mGCgr,GCreads,sum,na.rm=T)
+  # convert back to matrix
+  readNum<-dim(GenomicRanges::mcols(allGR))[2]-1 # don't include the "context" column
+  methMat<-t(as.matrix(GenomicRanges::mcols(allGR)[,2:(readNum+1)]))
+  colnames(methMat)<-GenomicRanges::start(allGR)
+  # remove reads with aboslutly no methylation info
+  methMat<-methMat[rowSums(is.na(methMat))!=dim(methMat)[2],]
+  return(methMat)
+}
 
-ol<-IRanges::findOverlaps(cg,gc)
 
