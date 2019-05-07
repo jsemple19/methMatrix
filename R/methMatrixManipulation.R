@@ -231,14 +231,16 @@ getMetaMethFreq<-function(matList,regionGRs,minReads=50) {
 #' @param baseFontSize The base font for the plotting theme (default=12 works well for 4x plots per A4 page)
 #' @return A ggplot2 plot object
 #' @export
-plotSingleMolecules<-function(mat,regionName,regionGRs,featureGRs="",myXlab="CpG/GpC position",featureLabel="TSS",title=NULL, baseFontSize=12) {
+plotSingleMolecules<-function(mat,regionName,regionGRs,featureGRs="",myXlab="CpG/GpC position",featureLabel="TSS",title=NULL, baseFontSize=12, maxNAfraction=0.2) {
   ### single molecule plot. mat is matrix containing methylation values at different postions (columns) in
   # individual reads (rows). regionName is the ID of the amplicon or genomic regoin being plotted. regionGRs is a
   # genomicRanges object containing the region being plotted. one of its mcols must have a name "ID" in which the
   # same ID as in regionName appears. featureGRs is genomic ranges object for plotting location of some feature in
   # the region, such as the TSS. myXlab is the X axis label. featureLabel is the label for the type of feature that
   # will be plotted underneath the feature
-  if(dim(mat)[1]>10) {
+  tooManyNAs<-rowSums(is.na(mat))/dim(mat)[2]>maxNAfraction
+  mat<-mat[!tooManyNAs,]
+  if (!all(!is.null(dim(mat)) & dim(mat)[1]>10)) {
     regionGR<-regionGRs[match(regionName,regionGRs$ID)]
     if (length(featureGRs)>0) {
       featGR<-featureGRs[match(regionName,featureGRs$ID)]
