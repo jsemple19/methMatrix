@@ -240,7 +240,7 @@ plotSingleMolecules<-function(mat,regionName,regionGRs,featureGRs="",myXlab="CpG
   # will be plotted underneath the feature
   tooManyNAs<-rowSums(is.na(mat))/dim(mat)[2]>maxNAfraction
   mat<-mat[!tooManyNAs,]
-  if (!all(!is.null(dim(mat)) & dim(mat)[1]>10)) {
+  if (!is.null(dim(mat)) & any(dim(mat)[1]>10)) {
     regionGR<-regionGRs[match(regionName,regionGRs$ID)]
     if (length(featureGRs)>0) {
       featGR<-featureGRs[match(regionName,featureGRs$ID)]
