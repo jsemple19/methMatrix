@@ -24,7 +24,7 @@ makeCGorGCbed<-function(genomeFile,CGorGC) {
   allGR<-c(allGR,gr)
   # resize to cover only Cs
   allGR<-GenomicRanges::resize(allGR,width=1,fix=ifelse(CGorGC=="CG","start","end"))
-  allGR<-sort(allGR,ignore.strand=T)
+  allGR<-GenomicRanges::sort(allGR,ignore.strand=T)
 
   #export as bed file to genomeFile directory
   outDir<-dirname(genomeFile)
@@ -118,10 +118,12 @@ pileupToMethStatus<-function(pileupLine) {
   }
   if (!is.null(posUnmeth)) {
     unmethdf<-data.frame(pos=posUnmeth,reads=readsUnmeth,meth=0,stringsAsFactors=F)
-    if (exists("df")) {
+    first<-TRUE
+    if (first==FALSE) {
       df<-rbind(df,unmethdf)
     } else {
       df<-unmethdf
+      first<-FALSE
     }
   }
   return(df)
@@ -236,29 +238,34 @@ combineCGandGCmatrices<-function(matCG,matGC,regionGR,gnmMotifGR){
   GCreads<-colnames(GenomicRanges::mcols(matGCgr))
 
   # use gnmMotifGR subset to "destrand" CG and GC calls by summing positions within motifs
-  cg<-nanodsmf::applyGRonGR(regGCCG,matCGgr,CGreads,sum,na.rm=T)
-  gc<-nanodsmf::applyGRonGR(regGCCG,matGCgr,GCreads,sum,na.rm=T)
+  cg<-nanodsmf::applyGRonGR(regGCCG,matCGgr,CGreads,mean,na.rm=T)
+  gc<-nanodsmf::applyGRonGR(regGCCG,matGCgr,GCreads,mean,na.rm=T)
 
   # find gr that overlap between cg and gc calls
   ol<-IRanges::findOverlaps(cg,gc)
-  # find reads that are in both grs (GCGorCGC motifs)
-  idxCGinGC<-CGreads %in% GCreads
-  idxGCinCG<-GCreads %in% CGreads
-  # average values from both matrices at these overlapping sites (NAs are ignored, but
-  # kept if not real values is found)
-  m1<-as.matrix(GenomicRanges::mcols(cg)[S4Vectors::queryHits(ol),CGreads[idxCGinGC]])
-  m2<-as.matrix(GenomicRanges::mcols(gc)[S4Vectors::subjectHits(ol),GCreads[idxGCinCG]])
-  mAvr<-ifelse(is.na(m1), ifelse(is.na(m2), NA, m2), ifelse(is.na(m2), m1, (m1 + m2)/2))
-  GenomicRanges::mcols(cg)[S4Vectors::queryHits(ol),CGreads[idxCGinGC]]<-tibble::as_tibble(mAvr)
 
-  # make nonoverlapping combined list
-  allGR<-c(cg,gc[!idxGCinCG])
+  if (length(ol)>=1) {
+    # find reads that are in both grs (GCGorCGC motifs)
+    idxCGinGC<-CGreads %in% GCreads
+    idxGCinCG<-GCreads %in% CGreads
+    # average values from both matrices at these overlapping sites (NAs are ignored, but
+    # kept if no real values is found)
+    m1<-as.matrix(GenomicRanges::mcols(cg)[S4Vectors::queryHits(ol),CGreads[idxCGinGC]])
+    m2<-as.matrix(GenomicRanges::mcols(gc)[S4Vectors::subjectHits(ol),GCreads[idxGCinCG]])
+    mAvr<-ifelse(is.na(m1), ifelse(is.na(m2), NA, m2), ifelse(is.na(m2), m1, (m1 + m2)/2))
+    GenomicRanges::mcols(cg)[S4Vectors::queryHits(ol),CGreads[idxCGinGC]]<-tibble::as_tibble(mAvr)
+    # make nonoverlapping combined list
+    allGR<-c(cg,gc[-S4Vectors::subjectHits(ol)])
+  } else {
+    allGR<-c(cg,gc)
+  }
+
   # shrink gr to single bp
-  CG1bp<-resize(allGR[allGR$context=="HCG"],width=1,fix="start")
-  GC1bp<-resize(allGR[allGR$context=="GCH"],width=1,fix="end")
-  GCGorCGC1bp<-resize(allGR[allGR$context=="GCGorCGC"],width=1,fix="center")
+  CG1bp<-GenomicRanges::resize(allGR[allGR$context=="HCG"],width=1,fix="start")
+  GC1bp<-GenomicRanges::resize(allGR[allGR$context=="GCH"],width=1,fix="end")
+  GCGorCGC1bp<-GenomicRanges::resize(allGR[allGR$context=="GCGorCGC"],width=1,fix="center")
   # combine and sort
-  allGR<-sort(c(CG1bp,GC1bp,GCGorCGC1bp))
+  allGR<-GenomicRanges::sort(c(CG1bp,GC1bp,GCGorCGC1bp))
 
   # convert back to matrix
   readNum<-dim(GenomicRanges::mcols(allGR))[2]-1 # don't include the "context" column
@@ -270,3 +277,110 @@ combineCGandGCmatrices<-function(matCG,matGC,regionGR,gnmMotifGR){
 }
 
 
+
+
+#' Get methylation frequency genomic ranges
+#'
+#' Takes MethylDackel methylation call bedgraph files for CpG CHH and CHG motifs and creates genomic ranges for CG, GC and all other Cs. Output is a list of these three genomic ranges objects.
+#'
+#' @param baseFileName base file name used in MethylDackel extract command (assumes _CpG.bedgraph, _CHH.bedgraph and _CHG.bedgraph extensions were later added by MethylDackel)
+#' @param pathToMethCalls Path to folder in which MethylDackel output is found
+#' @param motifFile Path to GRanges object with all unique CG/GC/GCGorCGC motifs in genome
+#' @param minDepth Minimum read depth. Positions with fewer than this number are discarded (default=5)
+#' @return Named list with CG, GC and C genomic ranges with metadata about methylation.
+#' @export
+getMethFreqGR<-function(baseFileName,pathToMethCalls,motifFile,minDepth=5) {
+  # get genome motifs
+  gnmMotifs<-readRDS(motifFile)
+  GCmotifs<-gnmMotifs[gnmMotifs$context=="GCH"]
+  CGmotifs<-gnmMotifs[gnmMotifs$context=="HCG"]
+  GCGmotifs<-gnmMotifs[gnmMotifs$context=="GCGorCGC"]
+
+  # make sure the path variable is set
+  pathToMethCalls<-gsub("/$","",pathToMethCalls)
+  if (! exists("pathToMethCalls")) {pathToMethCalls="."}
+  # read in methyldackel output files
+  methCG<-rtracklayer::import(paste0(pathToMethCalls,"/",baseFileName,"_CpG.bedGraph"),format="bedGraph")
+  colnames(mcols(methCG))<-c("methPercent","methylated","nonMethylated")
+  methCG$readDepth<-rowSums(cbind(methCG$methylated,methCG$nonMethylated))
+  methCG<-methCG[methCG$readDepth>minDepth]
+  methCHH<-rtracklayer::import(paste0(pathToMethCalls,"/",baseFileName,"_CHH.bedGraph"),format="bedGraph")
+  colnames(mcols(methCHH))<-c("methPercent","methylated","nonMethylated")
+  methCHG<-rtracklayer::import(paste0(pathToMethCalls,"/",baseFileName,"_CHG.bedGraph"),format="bedGraph")
+  colnames(mcols(methCHG))<-c("methPercent","methylated","nonMethylated")
+  methNonCG<-GenomicRanges::sort(c(methCHH,methCHG))
+
+  # create methGC
+  ol4<-IRanges::findOverlaps(methNonCG,GCmotifs)
+  ol5<-IRanges::findOverlaps(methNonCG,GCGmotifs)
+  GCidx<-c(S4Vectors::queryHits(ol4),S4Vectors::queryHits(ol5))
+  methGC<-GenomicRanges::sort(methNonCG[GCidx])
+  methGC$readDepth<-rowSums(cbind(methGC$methylated,methGC$nonMethylated))
+  methGC<-methGC[methGC$readDepth>minDepth]
+
+  # create methC
+  methC<-methNonCG[-GCidx]
+  methC$readDepth<-rowSums(cbind(methC$methylated,methC$nonMethylated))
+  methC<-methC[methC$readDepth>minDepth]
+
+  return(list(CG=methCG,GC=methGC,C=methC))
+}
+
+
+
+#' Convert Genomic ranges list to long data frame for plotting
+#'
+#' Methylation frequency data stored in  a list(by sample) of list (by C context) of genomic ranges is extracted into a data frame. By specifying a context type ("CG","GC" or "C") this type of data is extracted for all samples listed in "samples" can converted to a dataframe.
+#'
+#' @param methFreqGR A list (by sample) of a list (by C context) of genomic ranges for cytosine methylation frquency
+#' @param samples a vector of sample names for which to extract the data
+#' @param Ctype The type of sequence context for the cytosine _("CG","GC" or "C")
+#' @return A long-form data frame with methylation frequency and counts at different sites in different samples
+#' @export
+grlToDf<-function(methFreqGR,samples,Ctype) {
+  first<-TRUE
+  for (sampleName in samples) {
+    df<-as.data.frame(methFreqGR[[sampleName]][[Ctype]])
+    df$sampleName<-sampleName
+    if (first==FALSE) {
+      alldf<-rbind(alldf,df)
+    } else {
+      alldf<-df
+      first<-FALSE
+    }
+  }
+  alldf$sampleName<-factor(alldf$sampleName)
+  return(alldf)
+}
+
+
+#' Convert Genomic ranges list to single genomic range with sample methylation and total counts in metadata
+#'
+#' genomic ranges for CG and GC positions in each samples are combined and sorted. Then genomic ranges
+#' from different samples are merged together putting methylation frequency (_M) and total read counts (_T) for each sample in the metadata.
+#'
+#' @param methFreqGR A list (by sample) of a list (by C context) of genomic ranges for cytosine methylation frquency
+#' @param samples a vector of sample names for which to extract the data
+#' @return A genomic ranges wtih all CG and GC positions found in the samples. The metadata columns contain methylation frequency (_M) and total read count (_T) for each sample
+#' @export
+combineCGGCgr<-function(methFreqGR,samples) {
+  first<-TRUE
+  for (sampleName in samples) {
+    cg<-methFreqGR[[sampleName]][["CG"]]
+    gc<-methFreqGR[[sampleName]][["GC"]]
+    cggc<-GenomicRanges::sort(c(cg,gc))
+    fractionMeth<-cggc$methylated/cggc$readDepth
+    readDepth<-cggc$readDepth
+    GenomicRanges::mcols(cggc)<-NULL
+    GenomicRanges::mcols(cggc)[,paste0(sampleName,"_M")]<-fractionMeth
+    GenomicRanges::mcols(cggc)[,paste0(sampleName,"_T")]<-readDepth
+
+    if (first==FALSE) {
+      allcggc<-GenomicRanges::merge(allcggc,cggc,all=T)
+    } else {
+      allcggc<-cggc
+      first<-FALSE
+    }
+  }
+  return(allcggc)
+}

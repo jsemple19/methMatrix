@@ -231,8 +231,7 @@ getMetaMethFreq<-function(matList,regionGRs,minReads=50) {
 #' @param baseFontSize The base font for the plotting theme (default=12 works well for 4x plots per A4 page)
 #' @return A ggplot2 plot object
 #' @export
-plotSingleMolecules<-function(mat,regionName,regionGRs,featureGRs,myXlab="CpG/GpC position",featureLabel="TSS",
-                                 title=NULL, baseFontSize=12) {
+plotSingleMolecules<-function(mat,regionName,regionGRs,featureGRs="",myXlab="CpG/GpC position",featureLabel="TSS",title=NULL, baseFontSize=12) {
   ### single molecule plot. mat is matrix containing methylation values at different postions (columns) in
   # individual reads (rows). regionName is the ID of the amplicon or genomic regoin being plotted. regionGRs is a
   # genomicRanges object containing the region being plotted. one of its mcols must have a name "ID" in which the
@@ -252,29 +251,32 @@ plotSingleMolecules<-function(mat,regionName,regionGRs,featureGRs,myXlab="CpG/Gp
       silent = TRUE)
     mat[na.matrix]<-NA
     if (class(hc) == "try-error") {
-      df<-as.data.frame(mat)
+      df<-as.data.frame(mat,stringsAsFactors=F)
       print("hclust failed. Matrix dim: ")
       print(dim(mat))
     } else {
-      df<-as.data.frame(mat[hc$order,])
+      df<-as.data.frame(mat[hc$order,], stringsAsFactors=F)
     }
 
     reads<-row.names(df)
     d<-tidyr::gather(df,key=position,value=methylation)
     d$molecules<-seq_along(reads)
-    d$methylation<-as.character(d$methylation)
+    #d$methylation<-as.character(d$methylation)
     d$position<-as.numeric(d$position)
     if (is.null(title)) {
       title=paste0(regionName, ": ",seqnames(regionGR)," ",strand(regionGR),"ve strand")
     }
     p<-ggplot2::ggplot(d,aes(x=position,y=molecules,width=2)) +
-      ggplot2::geom_tile(aes(width=6,fill=methylation),alpha=0.8) +
-      ggplot2::scale_fill_manual(values=c("0"="black","1"="grey80"),na.translate=F,na.value="white",
-                        labels=c("protected","accessible"),name="dSMF") +
+      ggplot2::geom_tile(aes(width=3,fill=methylation),alpha=0.8) +
+      ggplot2::scale_fill_gradient(low="blue", high="red", na.value="transparent",
+                                   breaks=c(0,1), labels=c("protected","accessible"),
+                                   limits=c(0,1)) +
+      #ggplot2::scale_fill_manual(values=c("0"="black","1"="grey80"),na.translate=F,na.value="white", labels=c("protected","accessible"),name="dSMF") +
       ggplot2::theme_light(base_size=baseFontSize) +
       ggplot2::theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
             plot.title = element_text(face = "bold",hjust = 0.5),
-            legend.position="bottom", legend.key.height = unit(0.1, "cm")) +
+            legend.position="bottom", legend.key.height = unit(0.5, "cm"),
+            legend.key.width=unit(0.4,"cm")) +
       ggplot2::ggtitle(title) +
       ggplot2::xlab(myXlab) +
       ggplot2::ylab("Single molecules") +
