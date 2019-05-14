@@ -6,7 +6,7 @@
 \usage{
 plotSingleMoleculesWithAvr(mat, regionName, regionGRs, featureGRs,
   myXlab = "CpG/GpC position", featureLabel = "TSS", title = NULL,
-  baseFontSize = 11)
+  baseFontSize = 11, maxNAfraction = 0.2)
 }
 \arguments{
 \item{mat}{A methylation matrix}

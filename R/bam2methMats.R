@@ -41,7 +41,7 @@ makeCGorGCbed<-function(genomeFile,CGorGC) {
 #' @param region Genomic range of region for which to extract reads. It can also be a string
 #' denoting the region, e.g. "X:8069396-8069886"
 #' @return A matrix with reads as row names and C positions as column names.
-#' Every position in matrix has a value of 0 (not methylated), 1 (methylated) or
+#' Every position in matrix has a value of 0 (methylated), 1 (not methylated) or
 #' NA (undetermined)
 #'
 #' @export
@@ -394,4 +394,44 @@ combineCGGCgr<-function(methFreqGR,samples) {
     }
   }
   return(allcggc)
+}
+
+
+
+#' Find bisulfite conversion rate of Cs in non-methylated context
+#'
+#' Use bedfile with positons of Cs that are in non-methylated context to obtain stats
+#' about the number of informative Cs and conversion status of Cs per read
+#'
+#' @param bamFile String with path to bam file with alignments of reads to genome
+#' @param genomeFile String with path to fasta file with genome sequence
+#' @param bedFileC String with path to .bed file with locations of Cs to be evaluated (for forward strand calls)
+#' @param bedFileG String with path to .bed file with locations of Gs to be evaluated (for reverse strand calls)
+#' @param region Genomic range of region for which to extract reads. It can also be a string
+#' denoting the region, e.g. "X:8069396-8069886"
+#' @return A data frame with the names of the reads, the count of the number of informative Cs
+#' per region (not NAs), the maximum number of possible Cs in the regon, and the fraction of
+#' the informative Cs which have been bisulfite converted
+#' @export
+poorBisulfiteConversion<-function(bamFile,genomeFile,bedFileC,bedFileG,regionGR) {
+  # calls on forward strand
+  matC<-getReadMatrix(bamFile,genomeFile,bedFileC,regionGR)
+  dfc<-data.frame(reads=row.names(matC),stringsAsFactors=F)
+  dfc$informativeCs<-rowSums(!is.na(matC))
+  dfc$totalCs<-dim(matC)[2]
+  dfc$fractionConverted<-rowMeans(matC,na.rm=T)
+  # calls on reverse strand
+  matG<-getReadMatrix(bamFile,genomeFile,bedFileG,regionGR)
+  dfg<-data.frame(reads=row.names(matG),stringsAsFactors=F)
+  dfg$informativeCs<-rowSums(!is.na(matG))
+  dfg$totalCs<-dim(matG)[2]
+  dfg$fractionConverted<-rowMeans(matG,na.rm=T)
+  #choose highest for each read (calls of 0, or close to 0 will be produced if reads on other strand from bedfile)
+  df<-merge(dfc,dfg,by=c("reads"),all=TRUE)
+  df[is.na(df)]<-0
+  keepDFC<-df$fractionConverted.x>=df$fractionConverted.y
+  df[!keepDFC,c("informativeCs.x","totalCs.x","fractionConverted.x")]<-df[!keepDFC,c("informativeCs.y","totalCs.y","fractionConverted.y")]
+  df[,c("informativeCs.y","totalCs.y","fractionConverted.y")]<-NULL
+  colnames(df)<-gsub("\\.x","",colnames(df))
+  return(df)
 }
