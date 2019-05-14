@@ -232,12 +232,13 @@ getMetaMethFreq<-function(matList,regionGRs,minReads=50) {
 #' @return A ggplot2 plot object
 #' @export
 plotSingleMolecules<-function(mat,regionName,regionGRs,featureGRs="",myXlab="CpG/GpC position",featureLabel="TSS",title=NULL, baseFontSize=12, maxNAfraction=0.2) {
-  ### single molecule plot. mat is matrix containing methylation values at different postions (columns) in
-  # individual reads (rows). regionName is the ID of the amplicon or genomic regoin being plotted. regionGRs is a
-  # genomicRanges object containing the region being plotted. one of its mcols must have a name "ID" in which the
-  # same ID as in regionName appears. featureGRs is genomic ranges object for plotting location of some feature in
-  # the region, such as the TSS. myXlab is the X axis label. featureLabel is the label for the type of feature that
-  # will be plotted underneath the feature
+  ### single molecule plot. mat is matrix containing methylation values at different postions
+  # (columns) in individual reads (rows). regionName is the ID of the amplicon or genomic
+  # region being plotted. regionGRs is a genomicRanges object containing the region being
+  # plotted. one of its mcols must have a name "ID" in which the same ID as in regionName
+  # appears. featureGRs is genomic ranges object for plotting location of some feature in
+  # the region, such as the TSS. myXlab is the X axis label. featureLabel is the label for
+  # the type of feature that will be plotted underneath the feature
   tooManyNAs<-rowSums(is.na(mat))/dim(mat)[2]>maxNAfraction
   mat<-mat[!tooManyNAs,]
   if (!is.null(dim(mat)) & any(dim(mat)[1]>10)) {
@@ -272,23 +273,27 @@ plotSingleMolecules<-function(mat,regionName,regionGRs,featureGRs="",myXlab="CpG
       ggplot2::geom_tile(aes(width=3,fill=methylation),alpha=0.8) +
       ggplot2::scale_fill_gradient(low="blue", high="red", na.value="transparent",
                                    breaks=c(0,1), labels=c("protected","accessible"),
-                                   limits=c(0,1)) +
+                                   limits=c(0,1), name="dSMF\n\n") +
       #ggplot2::scale_fill_manual(values=c("0"="black","1"="grey80"),na.translate=F,na.value="white", labels=c("protected","accessible"),name="dSMF") +
       ggplot2::theme_light(base_size=baseFontSize) +
       ggplot2::theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
             plot.title = element_text(face = "bold",hjust = 0.5),
-            legend.position="bottom", legend.key.height = unit(0.5, "cm"),
-            legend.key.width=unit(0.4,"cm")) +
+            legend.position="bottom", legend.key.height = unit(0.2, "cm"),
+            legend.key.width=unit(0.5,"cm")) +
       ggplot2::ggtitle(title) +
       ggplot2::xlab(myXlab) +
       ggplot2::ylab("Single molecules") +
       ggplot2::xlim(start(regionGR),end(regionGR)+10)
     if(length(featureGRs)>0) {
-      p<-p+ggplot2::geom_linerange(aes(x=start(featGR), y=NULL, ymin=0, ymax=length(reads)+max(3,0.04*length(reads))),col="red") +
-        ggplot2::annotate("segment", x = start(featGR), xend = start(featGR)+20*ifelse(strand(featGR)=="-",-1,1),
-                          y = length(reads)+max(3,0.04*length(reads)), yend =length(reads)+max(3,0.04*length(reads)),
-                          colour = "red", arrow=arrow(length = unit(0.3, "cm")), size=0.7) +
-        ggplot2::annotate(geom="text", x=start(featGR), y=-max(2,0.03*length(reads)), label=featureLabel,color="red")
+      p<-p+ggplot2::geom_linerange(aes(x=start(featGR), y=NULL, ymin=0,
+                                       ymax=length(reads)+max(3,0.04*length(reads))),col="black") +
+        ggplot2::annotate("segment", x = start(featGR),
+                          xend = start(featGR)+20*ifelse(strand(featGR)=="-",-1,1),
+                          y = length(reads)+max(3,0.04*length(reads)),
+                          yend =length(reads)+max(3,0.04*length(reads)),
+                          colour = "black", arrow=arrow(length = unit(0.3, "cm")), size=0.7) +
+        ggplot2::annotate(geom="text", x=start(featGR), y=-max(2,0.03*length(reads)),
+                          label=featureLabel,color="black")
 
     }
   } else {
@@ -315,9 +320,13 @@ plotSingleMolecules<-function(mat,regionName,regionGRs,featureGRs="",myXlab="CpG
 #' @param baseFontSize The base font for the plotting theme (default=11 works well for 4x plots per A4 page)
 #' @return A ggplot2 plot object
 #' @export
-plotSingleMoleculesWithAvr<-function(mat,regionName,regionGRs,featureGRs,myXlab="CpG/GpC position",featureLabel="TSS",
-                                     title=NULL, baseFontSize=11) {
-  if(dim(mat)[1]>10) {
+plotSingleMoleculesWithAvr<-function(mat,regionName,regionGRs,featureGRs,
+                                     myXlab="CpG/GpC position",featureLabel="TSS",
+                                     title=NULL, baseFontSize=11, maxNAfraction=0.2) {
+  # remove reads with more than maxNAfraction positions with NAs
+  tooManyNAs<-rowSums(is.na(mat))/dim(mat)[2]>maxNAfraction
+  mat<-mat[!tooManyNAs,]
+  if(!is.null(dim(mat)) & any(dim(mat)[1]>10)) {
     regionGR<-regionGRs[match(regionName,regionGRs$ID)]
     if (length(featureGRs)>0) {
       featGR<-featureGRs[match(regionName,featureGRs$ID)]
@@ -330,17 +339,17 @@ plotSingleMoleculesWithAvr<-function(mat,regionName,regionGRs,featureGRs,myXlab=
       silent = TRUE)
     mat[na.matrix]<-NA
     if (class(hc) == "try-error") {
-      df<-as.data.frame(mat)
+      df<-as.data.frame(mat,stringsAsFactors=F)
       print("hclust failed. Matrix dim: ")
       print(dim(mat))
     } else {
-      df<-as.data.frame(mat[hc$order,])
+      df<-as.data.frame(mat[hc$order,],stringsAsFactors=F)
     }
 
     reads<-row.names(df)
     d<-tidyr::gather(df,key=position,value=methylation)
     d$molecules<-seq_along(reads)
-    d$methylation<-as.character(d$methylation)
+    #d$methylation<-as.character(d$methylation)
     d$position<-as.numeric(d$position)
     if (is.null(title)) {
       title=paste0(regionName, ": ",seqnames(regionGR)," ",strand(regionGR),"ve strand")
@@ -357,31 +366,38 @@ plotSingleMoleculesWithAvr<-function(mat,regionName,regionGRs,featureGRs,myXlab=
       ggplot2::ylim(0,1) +
       ggplot2::xlim(start(regionGR),end(regionGR)+20)
     if (length(featureGRs)>0) { # plot feature if present
-      p1<-p1 + ggplot2::geom_linerange(aes(x=start(featGR), y=NULL, ymin=0, ymax=1),col="red",size=0.7) +
-        ggplot2::annotate("segment", x = start(featGR), xend = start(featGR)+20*ifelse(strand(featGR)=="-",-1,1),
-                          y = 1, yend = 1, colour = "red", size=0.7, arrow=arrow(length = unit(0.2, "cm")))
+      p1<-p1 + ggplot2::geom_linerange(aes(x=start(featGR), y=NULL, ymin=0, ymax=1),
+                                       col="black",size=0.7) +
+        ggplot2::annotate("segment", x = start(featGR),
+                          xend = start(featGR)+20*ifelse(strand(featGR)=="-",-1,1),
+                          y = 1, yend = 1, colour = "black", size=0.7,
+                          arrow=arrow(length = unit(0.2, "cm")))
     }
 
     p2<-ggplot2::ggplot(d,aes(x=position,y=molecules,width=2)) +
-      ggplot2::geom_tile(aes(width=6,fill=methylation),alpha=0.8) +
-      ggplot2::scale_fill_manual(values=c("0"="black","1"="grey80"),na.translate=F,na.value="white",
-                        labels=c("protected","accessible"),name="dSMF") +
+      ggplot2::geom_tile(aes(width=3,fill=methylation),alpha=0.8) +
+      ggplot2::scale_fill_gradient(low="blue", high="red", na.value="transparent",
+                                   breaks=c(0,1), labels=c("protected","accessible"),
+                                   limits=c(0,1), name="dSMF\n\n") +
       ggplot2::theme_light(base_size=baseFontSize) +
       ggplot2::theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
                      plot.title = element_blank(),legend.position="bottom",
-                     legend.key.height = unit(0.1, "cm")) +
+                     legend.key.height = unit(0.2, "cm"), legend.key.width=unit(0.5,"cm")) +
       ggplot2::xlab(myXlab) +
       ggplot2::ylab("Single molecules") +
       ggplot2::xlim(start(regionGR),end(regionGR)+20)
     if (length(featureGRs)>0) {
-      p2<-p2+ggplot2::geom_linerange(aes(x=start(featGR), y=NULL, ymin=0, ymax=length(reads)+max(3,0.04*length(reads))),col="red") +
-        ggplot2::annotate("segment", x = start(featGR), xend = start(featGR)+20*ifelse(strand(featGR)=="-",-1,1),
-                          y = length(reads)+max(3,0.04*length(reads)), yend =length(reads)+max(3,0.04*length(reads)),
-                          arrow=arrow(length = unit(0.2, "cm")), colour="red", size=0.7) +
-        ggplot2::annotate(geom="text", x=start(featGR), y=-max(2,0.03*length(reads)), label=featureLabel, color="red")
+      p2<-p2+ggplot2::geom_linerange(aes(x=start(featGR), y=NULL, ymin=0,
+                                         ymax=length(reads)+max(3,0.04*length(reads))), col="black") +
+        ggplot2::annotate("segment", x = start(featGR),
+                          xend = start(featGR)+20*ifelse(strand(featGR)=="-",-1,1),
+                          y = length(reads)+max(3,0.04*length(reads)),
+                          yend =length(reads)+max(3,0.04*length(reads)),
+                          arrow=arrow(length = unit(0.2, "cm")), colour="black", size=0.7) +
+        ggplot2::annotate(geom="text", x=start(featGR), y=-max(2,0.03*length(reads)),
+                          label=featureLabel, color="black")
     }
-    figure<-ggpubr::ggarrange(p1, p2, heights = c(0.5, 2),
-                      ncol = 1, nrow = 2, align = "v")
+    figure<-ggpubr::ggarrange(p1, p2, heights = c(0.5, 2), ncol = 1, nrow = 2, align = "v")
     figure<-ggpubr::annotate_figure(figure, top = text_grob(title, face = "bold"))
   } else {
     figure=NULL

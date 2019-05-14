@@ -65,8 +65,10 @@ getReadMatrix<-function(bamFile,genomeFile,bedFile,region) {
   rownames(mat)<-allReads
   # scroll through tab to extract methylation values in strand aware way
   for (line in 1:nrow(tab)) {
-    df<-pileupToMethStatus(tab[line,])
-    mat[df$reads,df$pos]<-df$meth
+    df<-pileupToConversionStatus(tab[line,])
+    m1<-mat[df$reads,df$pos]
+    m2<-df$Cconv
+    mat[df$reads,df$pos]<-ifelse(is.na(m1), ifelse(is.na(m2), NA, m2), ifelse(is.na(m2), m1, (m1 + m2)))
   }
   return(mat)
 }
@@ -77,57 +79,59 @@ getReadMatrix<-function(bamFile,genomeFile,bedFile,region) {
 #'
 #' @param pileupLine One line data frame from pileup file. Columns have been named: c("chr","start","ref","count","matches","BQ","reads")
 #' @return A data frame with C position, read name and methylation call  0 (not methylated), 1 (methylated)
-pileupToMethStatus<-function(pileupLine) {
+#' @export
+pileupToConversionStatus<-function(pileupLine) {
   # if read matches forward strand
   match<-parseMatchString(pileupLine$matches)
   if(nchar(match)!=pileupLine$count) {
     "problem with match string"
   }
   df=NULL
-  posMeth=NULL
-  posUnmeth=NULL
+  posConv=NULL
+  posUnconv=NULL
   if (pileupLine$ref=="c" | pileupLine$ref=="C") {
-    matchList<-stringr::str_locate_all(match,"[\\.]")[[1]]
+    matchList<-stringr::str_locate_all(match,"[\\.,]")[[1]]
     if(dim(matchList)[1]>0) {
-      posMeth<-rep(pileupLine$start,dim(matchList)[1])
-      readsMeth<-unlist(strsplit(pileupLine$reads,","))[matchList[,1]]
+      posConv<-rep(pileupLine$start,dim(matchList)[1])
+      readsConv<-unlist(strsplit(pileupLine$reads,","))[matchList[,1]]
     }
-    matchList<-stringr::str_locate_all(match,"[T]")[[1]]
+    matchList<-stringr::str_locate_all(match,"[Tt]")[[1]]
     if(dim(matchList)[1]>0) {
-      posUnmeth<-rep(pileupLine$start,dim(matchList)[1])
-      readsUnmeth<-unlist(strsplit(pileupLine$reads,","))[matchList[,1]]
+      posUnconv<-rep(pileupLine$start,dim(matchList)[1])
+      readsUnconv<-unlist(strsplit(pileupLine$reads,","))[matchList[,1]]
     }
   }
   # if read matches reverse strand
   if (pileupLine$ref=="g" | pileupLine$ref=="G") {
-    matchList<-stringr::str_locate_all(match,"[,]")[[1]]
+    matchList<-stringr::str_locate_all(match,"[\\.,]")[[1]]
     if(dim(matchList)[1]>0) {
-      posMeth<-rep(pileupLine$start,dim(matchList)[1])
-      readsMeth<-unlist(strsplit(pileupLine$reads,","))[matchList[,1]]
+      posConv<-rep(pileupLine$start,dim(matchList)[1])
+      readsConv<-unlist(strsplit(pileupLine$reads,","))[matchList[,1]]
     }
-    matchList<-stringr::str_locate_all(match,"[a]")[[1]]
+    matchList<-stringr::str_locate_all(match,"[aA]")[[1]]
     if(dim(matchList)[1]>0) {
-      posUnmeth<-rep(pileupLine$start,dim(matchList)[1])
-      readsUnmeth<-unlist(strsplit(pileupLine$reads,","))[matchList[,1]]
+      posUnconv<-rep(pileupLine$start,dim(matchList)[1])
+      readsUnconv<-unlist(strsplit(pileupLine$reads,","))[matchList[,1]]
     }
   }
   #prepare df for export
-  if (!is.null(posMeth)) {
-    methdf<-data.frame(pos=posMeth,reads=readsMeth,meth=1,stringsAsFactors=F)
-    df<-methdf
+  first<-TRUE
+  if (!is.null(posConv)) {
+    convdf<-data.frame(pos=posConv,reads=readsConv,Cconv=0,stringsAsFactors=F)
+    df<-convdf
+    first<-FALSE
   }
-  if (!is.null(posUnmeth)) {
-    unmethdf<-data.frame(pos=posUnmeth,reads=readsUnmeth,meth=0,stringsAsFactors=F)
-    first<-TRUE
+  if (!is.null(posUnconv)) {
+    unconvdf<-data.frame(pos=posUnconv,reads=readsUnconv,Cconv=1,stringsAsFactors=F)
     if (first==FALSE) {
-      df<-rbind(df,unmethdf)
+      df<-rbind(df,unconvdf)
     } else {
-      df<-unmethdf
-      first<-FALSE
+      df<-unconvdf
     }
   }
   return(df)
 }
+
 
 # a dot stands for a match to the reference base on the forward strand,
 # a comma for a match on the reverse strand, a '>' or '<' for a reference skip,
@@ -238,8 +242,15 @@ combineCGandGCmatrices<-function(matCG,matGC,regionGR,gnmMotifGR){
   GCreads<-colnames(GenomicRanges::mcols(matGCgr))
 
   # use gnmMotifGR subset to "destrand" CG and GC calls by summing positions within motifs
-  cg<-nanodsmf::applyGRonGR(regGCCG,matCGgr,CGreads,mean,na.rm=T)
-  gc<-nanodsmf::applyGRonGR(regGCCG,matGCgr,GCreads,mean,na.rm=T)
+  cg<-nanodsmf::applyGRonGR(regGCCG,matCGgr,CGreads,sum,na.rm=T)
+  gc<-nanodsmf::applyGRonGR(regGCCG,matGCgr,GCreads,sum,na.rm=T)
+
+  # ensure no value in the matrix exceeds 1
+  maxval1<-function(m1){
+    ifelse(is.na(m1), NA, ifelse(m1>1, 1, m1))
+  }
+  mcols(cg)[,2:dim(mcols(cg))[2]]<-as.data.table(maxval1(as.matrix(mcols(cg)[,2:dim(mcols(cg))[2]])))
+  mcols(gc)[,2:dim(mcols(gc))[2]]<-as.data.table(maxval1(as.matrix(mcols(gc)[,2:dim(mcols(gc))[2]])))
 
   # find gr that overlap between cg and gc calls
   ol<-IRanges::findOverlaps(cg,gc)
@@ -269,11 +280,11 @@ combineCGandGCmatrices<-function(matCG,matGC,regionGR,gnmMotifGR){
 
   # convert back to matrix
   readNum<-dim(GenomicRanges::mcols(allGR))[2]-1 # don't include the "context" column
-  methMat<-t(as.matrix(GenomicRanges::mcols(allGR)[,2:(readNum+1)]))
-  colnames(methMat)<-GenomicRanges::start(allGR)
+  convMat<-t(as.matrix(GenomicRanges::mcols(allGR)[,2:(readNum+1)]))
+  colnames(convMat)<-GenomicRanges::start(allGR)
   # remove reads with aboslutly no methylation info
-  methMat<-methMat[rowSums(is.na(methMat))!=dim(methMat)[2],]
-  return(methMat)
+  convMat<-convMat[rowSums(is.na(convMat))!=dim(convMat)[2],]
+  return(convMat)
 }
 
 
