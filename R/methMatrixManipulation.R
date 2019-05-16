@@ -226,12 +226,16 @@ getMetaMethFreq<-function(matList,regionGRs,minReads=50) {
 #' @param myXlab  A label for the x axis (default is "CpG/GpC position")
 #' @param featureLabel A label for a feature you want to plot, such as the position of the TSS
 #' (default="TSS)
+#' @param drawArrow Boolean: should the feature be drawn as an arrow or just a line? (default=TRUE)
 #' @param title A title for the plot (default will be the name of the region, the chr and strand on which
 #' the region is present)
 #' @param baseFontSize The base font for the plotting theme (default=12 works well for 4x plots per A4 page)
+#' @param maxNAfraction Maximual fraction of CpG/GpC positions that can be undefined (default=0.2)
 #' @return A ggplot2 plot object
 #' @export
-plotSingleMolecules<-function(mat,regionName,regionGRs,featureGRs="",myXlab="CpG/GpC position",featureLabel="TSS",title=NULL, baseFontSize=12, maxNAfraction=0.2) {
+plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs="", myXlab="CpG/GpC position",
+                              featureLabel="TSS", drawArrow=TRUE, title=NULL, baseFontSize=12,
+                              maxNAfraction=0.2) {
   ### single molecule plot. mat is matrix containing methylation values at different postions
   # (columns) in individual reads (rows). regionName is the ID of the amplicon or genomic
   # region being plotted. regionGRs is a genomicRanges object containing the region being
@@ -267,7 +271,11 @@ plotSingleMolecules<-function(mat,regionName,regionGRs,featureGRs="",myXlab="CpG
     #d$methylation<-as.character(d$methylation)
     d$position<-as.numeric(d$position)
     if (is.null(title)) {
-      title=paste0(regionName, ": ",seqnames(regionGR)," ",strand(regionGR),"ve strand")
+      strandInfo<-ifelse(GenomicRanges::strand(featGR)!=GenomicRanges::strand(regionGR),
+                         paste0("reg: ",GenomicRanges::strand(regionGR),"ve, ",
+                                featureLabel,": ",GenomicRanges::strand(featGR),"ve strand"),
+                         paste0(GenomicRanges::strand(regionGR),"ve strand"))
+      title=paste0(regionName, ": ",GenomicRanges::seqnames(regionGR)," ",strandInfo)
     }
     p<-ggplot2::ggplot(d,aes(x=position,y=molecules,width=2)) +
       ggplot2::geom_tile(aes(width=3,fill=methylation),alpha=0.8) +
@@ -286,14 +294,16 @@ plotSingleMolecules<-function(mat,regionName,regionGRs,featureGRs="",myXlab="CpG
       ggplot2::xlim(start(regionGR),end(regionGR)+10)
     if(length(featureGRs)>0) {
       p<-p+ggplot2::geom_linerange(aes(x=start(featGR), y=NULL, ymin=0,
-                                       ymax=length(reads)+max(3,0.04*length(reads))),col="black") +
-        ggplot2::annotate("segment", x = start(featGR),
+                                       ymax=length(reads)+max(3,0.04*length(reads))),col="black")+
+        ggplot2::annotate(geom="text", x=start(featGR), y=-max(2,0.03*length(reads)),
+                          label=featureLabel,color="black")
+      if (drawArrow==TRUE) {
+        p<-p+ggplot2::annotate("segment", x = start(featGR),
                           xend = start(featGR)+20*ifelse(strand(featGR)=="-",-1,1),
                           y = length(reads)+max(3,0.04*length(reads)),
                           yend =length(reads)+max(3,0.04*length(reads)),
-                          colour = "black", arrow=arrow(length = unit(0.3, "cm")), size=0.7) +
-        ggplot2::annotate(geom="text", x=start(featGR), y=-max(2,0.03*length(reads)),
-                          label=featureLabel,color="black")
+                          colour = "black", arrow=arrow(length = unit(0.3, "cm")), size=0.7)
+      }
 
     }
   } else {
@@ -315,13 +325,15 @@ plotSingleMolecules<-function(mat,regionName,regionGRs,featureGRs="",myXlab="CpG
 #' @param myXlab  A label for the x axis (default is "CpG/GpC position")
 #' @param featureLabel A label for a feature you want to plot, such as the position of the TSS
 #' (default="TSS)
+#' @param drawArrow Boolean: should the feature be drawn as an arrow or just a line? (default=TRUE)
 #' @param title A title for the plot (default will be the name of the region, the chr and strand on which
 #' the region is present)
 #' @param baseFontSize The base font for the plotting theme (default=11 works well for 4x plots per A4 page)
+#' @param maxNAfraction Maximual fraction of CpG/GpC positions that can be undefined (default=0.2)
 #' @return A ggplot2 plot object
 #' @export
-plotSingleMoleculesWithAvr<-function(mat,regionName,regionGRs,featureGRs,
-                                     myXlab="CpG/GpC position",featureLabel="TSS",
+plotSingleMoleculesWithAvr<-function(mat, regionName, regionGRs, featureGRs,
+                                     myXlab="CpG/GpC position", featureLabel="TSS", drawArrow=TRUE,
                                      title=NULL, baseFontSize=11, maxNAfraction=0.2) {
   # remove reads with more than maxNAfraction positions with NAs
   tooManyNAs<-rowSums(is.na(mat))/dim(mat)[2]>maxNAfraction
@@ -352,10 +364,14 @@ plotSingleMoleculesWithAvr<-function(mat,regionName,regionGRs,featureGRs,
     #d$methylation<-as.character(d$methylation)
     d$position<-as.numeric(d$position)
     if (is.null(title)) {
-      title=paste0(regionName, ": ",seqnames(regionGR)," ",strand(regionGR),"ve strand")
+      strandInfo<-ifelse(GenomicRanges::strand(featGR)!=GenomicRanges::strand(regionGR),
+                         paste0("reg: ",GenomicRanges::strand(regionGR),"ve, ",
+                                featureLabel,": ",GenomicRanges::strand(featGR),"ve strand"),
+                         paste0(GenomicRanges::strand(regionGR),"ve strand"))
+      title=paste0(regionName, ": ",GenomicRanges::seqnames(regionGR)," ",strandInfo)
     }
     dAvr<-data.frame(position=as.numeric(colnames(df)),dSMF=1-colSums(df,na.rm=T)/length(reads))
-
+    # average plot
     p1<-ggplot2::ggplot(dAvr,aes(x=position,y=dSMF,group=1)) +
       ggplot2::geom_point()+
       ggplot2::geom_line(size=1,show.legend=F) +
@@ -367,13 +383,15 @@ plotSingleMoleculesWithAvr<-function(mat,regionName,regionGRs,featureGRs,
       ggplot2::xlim(start(regionGR),end(regionGR)+20)
     if (length(featureGRs)>0) { # plot feature if present
       p1<-p1 + ggplot2::geom_linerange(aes(x=start(featGR), y=NULL, ymin=0, ymax=1),
-                                       col="black",size=0.7) +
-        ggplot2::annotate("segment", x = start(featGR),
-                          xend = start(featGR)+20*ifelse(strand(featGR)=="-",-1,1),
-                          y = 1, yend = 1, colour = "black", size=0.7,
-                          arrow=arrow(length = unit(0.2, "cm")))
+                                       col="black",size=0.7)
+      if (drawArrow==TRUE) {
+        p1<-p1+ggplot2::annotate("segment", x = start(featGR),
+                              xend = start(featGR)+20*ifelse(strand(featGR)=="-",-1,1),
+                              y = 1, yend = 1, colour = "black", size=0.7,
+                              arrow=arrow(length = unit(0.2, "cm")))
+      }
     }
-
+    #singel molecule plot
     p2<-ggplot2::ggplot(d,aes(x=position,y=molecules,width=2)) +
       ggplot2::geom_tile(aes(width=3,fill=methylation),alpha=0.8) +
       ggplot2::scale_fill_gradient(low="blue", high="red", na.value="transparent",
@@ -386,16 +404,19 @@ plotSingleMoleculesWithAvr<-function(mat,regionName,regionGRs,featureGRs,
       ggplot2::xlab(myXlab) +
       ggplot2::ylab("Single molecules") +
       ggplot2::xlim(start(regionGR),end(regionGR)+20)
-    if (length(featureGRs)>0) {
+    if (length(featureGRs)>0) { # plot feature if present
       p2<-p2+ggplot2::geom_linerange(aes(x=start(featGR), y=NULL, ymin=0,
                                          ymax=length(reads)+max(3,0.04*length(reads))), col="black") +
-        ggplot2::annotate("segment", x = start(featGR),
-                          xend = start(featGR)+20*ifelse(strand(featGR)=="-",-1,1),
-                          y = length(reads)+max(3,0.04*length(reads)),
-                          yend =length(reads)+max(3,0.04*length(reads)),
-                          arrow=arrow(length = unit(0.2, "cm")), colour="black", size=0.7) +
-        ggplot2::annotate(geom="text", x=start(featGR), y=-max(2,0.03*length(reads)),
+             ggplot2::annotate(geom="text", x=start(featGR), y=-max(2,0.03*length(reads)),
                           label=featureLabel, color="black")
+
+        if (drawArrow==TRUE) {
+          p2<-p2+ggplot2::annotate("segment", x = start(featGR),
+                                 xend = start(featGR)+20*ifelse(strand(featGR)=="-",-1,1),
+                                 y = length(reads)+max(3,0.04*length(reads)),
+                                 yend =length(reads)+max(3,0.04*length(reads)),
+                                 colour = "black", arrow=arrow(length = unit(0.3, "cm")), size=0.7)
+        }
     }
     figure<-ggpubr::ggarrange(p1, p2, heights = c(0.5, 2), ncol = 1, nrow = 2, align = "v")
     figure<-ggpubr::annotate_figure(figure, top = text_grob(title, face = "bold"))
@@ -406,3 +427,176 @@ plotSingleMoleculesWithAvr<-function(mat,regionName,regionGRs,featureGRs,
 }
 
 
+#' Plot a list of list of single molecule matrices
+#'
+#' This function takes a list (by sample) of a list (by genomic region) of
+#' methylation matrices and produces single molecule plots for each amplicon with
+#' four samples per page.
+#'
+#' @param allSampleMats A list (by sample) of lists (by regions) of methylation matrices
+#' @param samples A list of samples to plot (same as sample names in allSampleMats)
+#' @param regionGRs A genomic regions object with all regions for which matrices should be extracted (same as in allSampleMats). The metadata columns must contain a column called "ID" with a unique ID for each region.
+#' @param featureGRs A genomic regions object for features (such as TSS) to be plotted. Feature must be identified with the same ID as the regionGRs
+#' @param regionType A collective name for this list of regions (e.g TSS or amplicons). It will be used in naming the output directories
+#' @param featureLabel A string with a label for the feature to be added to the plot (default="TSS")
+#' @param maxNAfraction Maximual fraction of CpG/GpC positions that can be undefined (default=0.2)
+#' @param withAvr Boolean value: should single molecule plots be plotted together with the average profile (default=FALSE)
+#' @param includeInFileName String to be included at the end of the plot file name, e.g. experiment name (default="")
+#' @param drawArrow Boolean: should the feature be drawn as an arrow or just a line? (default=TRUE)
+#' @return Plots are written to plots directory
+#' @export
+plotAllMatrices<-function(allSampleMats, samples, regionGRs, featureGRs, regionType,
+                          featureLabel="TSS", maxNAfraction=0.2,withAvr=FALSE,
+                          includeInFileName="", drawArrow=TRUE) {
+  # get list of all regions in the object
+  allAmp2plot<-unique(unlist(lapply(allSampleMats,function(x){names(x)})))
+  # plot single molecule matrices on their own
+  for (i in allAmp2plot) {
+    if (withAvr==TRUE) {
+      makeDirs(path,paste0("plots/singleMoleculePlotsAvr_",regionType))
+    } else {
+      makeDirs(path,paste0("plots/singleMoleculePlots_",regionType))
+    }
+    plotList=list()
+    print(paste0("plotting", i))
+    for (j in seq_along(samples)) {
+      mat<-allSampleMats[[samples[j]]][[i]]
+      maxReads=10000
+      if (!is.null(dim(mat))) {
+        if (dim(mat)[1]>maxReads) { # if matrix contains more than 10000 reads, do a random subsample
+          chooseRows<-sample(1:dim(mat)[1],maxReads)
+          mat<-mat[chooseRows,]
+        }
+        if (withAvr==TRUE) {
+          p<-plotSingleMoleculesWithAvr(mat=mat, regionName=i, regionGRs=regionGRs,
+                                        featureGRs=featureGRs, myXlab="CpG/GpC position",
+                                        featureLabel=featureLabel, drawArrow=drawArrow,
+                                        title=samples[j], baseFontSize=11,
+                                        maxNAfraction=maxNAfraction)
+        } else {
+          p<-plotSingleMolecules(mat=mat, regionName=i, regionGRs=regionGRs,
+                                 featureGRs=featureGRs, myXlab="CpG/GpC position",
+                                 featureLabel=featureLabel, drawArrow=drawArrow,
+                                 title=samples[j], baseFontSize=12,
+                                 maxNAfraction=maxNAfraction)
+        }
+        plotList[[samples[j]]]<-p
+      }
+    }
+    regionGR<-regionGRs[match(i,regionGRs$ID)]
+    featGR<-featureGRs[match(i,featureGRs$ID)]
+    chr<-GenomicRanges::seqnames(regionGR)
+    strandInfo<-ifelse(GenomicRanges::strand(featGR)!=GenomicRanges::strand(regionGR),
+                       paste0("reg: ",GenomicRanges::strand(regionGR),"ve, ",
+                              featureLabel,": ",GenomicRanges::strand(featGR),"ve strand"),
+                       paste0(GenomicRanges::strand(regionGR),"ve strand"))
+    title<-paste0(regionName, ": ",chr," ",strandInfo)
+    spacer<-ifelse(length(includeInFileName)>0,"_","")
+    mp<-marrangeGrob(grobs=plotList,nrow=2,ncol=2,top=title)
+    if (withAvr==TRUE) {
+      ggsave(paste0(path,"/plots/singleMoleculePlotsAvr_",regionType,"/",chr,"_",i,
+                    spacer,includeInFileName,".png"),
+             plot=mp, device="png", width=20, height=29, units="cm")
+    } else {
+      ggsave(paste0(path,"/plots/singleMoleculePlots_",regionType,"/",chr,"_",i,
+                    spacer, includeInFileName,".png"),
+             plot=mp, device="png", width=29, height=20, units="cm")
+    }
+  }
+}
+
+
+#' Convert Genomic Ranges to relative cooridnates
+#'
+#' Convert a normal genomic ranges to one where the start and end are relative to some
+#' anchor point - either the middle or the start of the genomic ranges (e.g. -250 to 250, or
+#' 0 to 500). The original start end and strand are stored in the metadata.
+#' @param grs A GenomicRanges object to be converted to relative coordinates
+#' @param winSize The size of the window you wish to create
+#' @anchorPoint One of "middle" or "start": the position from which numbering starts
+#' @return A GenomicRanges object with relative coordinate numbering
+#' @export
+convertGRtoRelCoord<-function(grs,winSize,anchorPoint="middle") {
+  grsRelCoord<-grs
+  GenomicRanges::mcols(grsRelCoord)$gnmStart<-GenomicRanges::start(grs)
+  GenomicRanges::mcols(grsRelCoord)$gnmEnd<-GenomicRanges::end(grs)
+  GenomicRanges::mcols(grsRelCoord)$gnmStrand<-GenomicRanges::strand(grs)
+  grsRelCoord<-GenomicRanges::resize(grsRelCoord,width=winSize,fix="center")
+  GenomicRanges::strand(grsRelCoord)<-"*"
+  if (anchorPoint=="middle") {
+    GenomicRanges::start(grsRelCoord)<- -winSize/2
+    GenomicRanges::end(grsRelCoord)<- winSize/2
+  } else if (anchorPoint=="start") {
+    GenomicRanges::start(grsRelCoord)<- 1
+    GenomicRanges::end(grsRelCoord)<- winSize
+  } else {
+    print("anchorPoint must be one of 'middle' or 'start'")
+  }
+  return(grsRelCoord)
+}
+
+
+#' get average methylation frequency from all matrices
+#'
+#' In order to do a metagene plot from matrices, the average methylation frequency from all
+#' matrices with more reads than minReads is collected into a data frame
+#' @param relCoordMats A list (by sample) of lists (by regions) of methylation matrices which have been converted to relative coordinates
+#' @param samples A list of samples to plot (same as sample names in allSampleMats)
+#' @param regionGRs A genomic regions object with all regions for which matrices should be extracted (same as in allSampleMats). The metadata columns must contain a column called "ID" with a unique ID for each region.
+#' @param minReads The minimal number of reads required in a matrix for average frequency to be calculated.
+#' @return Data frame with average methylation at relative coordinates extracted from all matrices for all samples
+#' @export
+getAllSampleMetaMethFreq<-function(relCoordMats,samples,regionGRs,minReads=10) {
+  first<-TRUE
+  for (i in seq_along(samples)) {
+    metaMethFreqDF<-getMetaMethFreq(matList=relCoordMats[[samples[i]]],
+                                    regionGRs=regionGRs,minReads=minReads)
+    print(samples[i])
+    metaMethFreqDF$sample<-samples[i]
+    if(first==TRUE) {
+      allSampleMetaMethFreqDF<-metaMethFreqDF
+      first<-FALSE
+    } else {
+      allSampleMetaMethFreqDF<-rbind(allSampleMetaMethFreqDF,metaMethFreqDF)
+    }
+  }
+  # convert position from factor to numeric
+  allSampleMetaMethFreqDF$position<-as.numeric(as.character(allSampleMetaMethFreqDF$position))
+  return(allSampleMetaMethFreqDF)
+}
+
+
+
+
+#' Plot metagene by sample
+#'
+#' Plots metagene methylation frequency from dataframe extracted from matrices.
+#' @param metageneDF ata frame with average methylation at relative coordinates extracted from all matrices for all samples
+#' @param maxPoints The maximum number of points to plot per sample. To avoid large files with too much overplotting, the defualt limit is set to 10000. Larger dataframes will be randomly sub-sampled
+#' @return A ggplot2 plot object
+#' @export
+plotDSMFmetageneDF<-function(metageneDF,maxPoints=10000) {
+  # subsample if too many points
+  if (nrow(metageneDF)>maxPoints) {
+    idx<-sample(1:nrow(metageneDF),maxPoints)
+  } else {
+    idx<-1:nrow(metageneDF)
+  }
+
+  p1<-ggplot(metageneDF[idx,],aes(x=position,y=1-methFreq)) +
+    theme_light(base_size=16) + ylim(0,1) +
+    xlab("Position relative to TSS") + ylab("dSMF (1-%methylation)") +
+    geom_linerange(aes(x=0, y=NULL, ymin=0, ymax=1),color="steelblue",size=1) +
+    geom_point(alpha=0.1) +
+    geom_smooth(colour="red",fill="red") +
+    facet_wrap(~sample)
+
+  p2<-ggplot(metageneDF,aes(x=position,y=1-methFreq,colour=sample)) +
+    theme_light(base_size=16) + ylim(0,1) +
+    xlab("Position relative to TSS") + ylab("dSMF (1-%methylation)") +
+    geom_linerange(aes(x=0, y=NULL, ymin=0, ymax=1),color="steelblue",size=1) +
+    geom_smooth(se=FALSE)
+
+  ml <- marrangeGrob(list(p1,p2), nrow=1, ncol=1)
+  return(ml)
+}

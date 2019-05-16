@@ -435,3 +435,130 @@ poorBisulfiteConversion<-function(bamFile,genomeFile,bedFileC,bedFileG,regionGR)
   colnames(df)<-gsub("\\.x","",colnames(df))
   return(df)
 }
+
+
+
+
+#' Make directories
+#'
+#' @param path String with path to where the directories should be made
+#' @param dirNameList Vector of strings with names of directories to create (can include multilevel directories)
+#' @return Creates the directories listed in dirNameList
+#' @example
+#' makeDirs(path=".",dirNameList=c("/txt","/rds/sample1"))
+makeDirs<-function(path,dirNameList=c()) {
+  for (d in dirNameList) {
+    if (!dir.exists(paste0(path,"/",d))){  # for alignments
+      dir.create(paste0(path,"/",d), recursive=TRUE, showWarnings=FALSE)
+    }
+  }
+}
+
+
+
+#' Extract list of methylation matrices
+#'
+#' Input requires a sampleTable with two columns: FileName contains the path to a bam file of
+#' aligned sequences. SampleName contains the name of the sample. The function will return a
+#' list of all samples and for each sample a list of methylation matrices for all regions listed
+#' in regionGRs. The data structure is as follows:
+#' [1] sample1
+#'     [1] region1: matrix of reads x Cpositions
+#'     [2] region2: matrix of reads x Cpositions
+#' [2] sample2
+#'     [1] region1: matrix of reads x Cpositions
+#'     [2] region2: matrix of reads x Cpositions
+#' Matrices contain values between 0 (not methylated) and 1 (methylated), or NA (undefined)
+#' @param sampleTable Table with FileName column listing the full path to bam files belonging to the samples listed in the SampleName column
+#' @param genomeFile String with path to fasta file with genome sequence
+#' @param regionGRs A genomic regions object with all regions for which matrices should be extracted. The metadata columns must contain a column called "ID" with a unique ID for that region.
+#' @param regionType A collective name for this list of regions (e.g TSS or amplicons)
+#' @param minConversionRate Minimal fraction of Cs from a non-methylation context that must be converted to Ts for the read to be included in the final matrix (default=0.8)
+#' @param maxNAfraction Maximual fraction of CpG/GpC positions that can be undefined (default=0.2)
+#' @param bedFilePrefix The full path and prefix of the bed file for C, G, CG and GC positions in the genome (i.e path and name of the file without the ".C.bed",".G.bed", ".CG.bed" or ".GC.bed" suffix). Defulat is NULL and assumes the bed file are in the same location as the genome sequence file.
+#' @param path Path for output. "plots", "csv" and "rds" directories will be created here. Default is current directory.
+#' @param convRatePlots Boolean value: should bisulfite conversion rate plots be created for each region? (default=FALSE)
+#' @return A list (by sample) of lists (by regions) of methylation matrices
+#' @export
+getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionType,
+                                    minConversionRate=0.8,maxNAfraction=0.2, bedFilePrefix=NULL,
+                                    path=".", convRatePlots=FALSE) {
+  allmats=list()
+  allSamplemats=list()
+  #create pathnames to bedfiles
+  if (is.null(bedFilePrefix)){
+    bedFilePrefix=gsub("\\.fa","", genomeFile)
+  }
+  bedFileC=paste0(bedFilePrefix,".C.bed")
+  bedFileG=paste0(bedFilePrefix,".G.bed")
+  bedFileCG=paste0(bedFilePrefix,".CG.bed")
+  bedFileGC=paste0(bedFilePrefix,".GC.bed")
+
+  # make output directories
+  makeDirs(path,c("csv", "rds"))
+  if (convRatePlots==TRUE) {
+    makeDirs(path,c("plots/informativeCsPlots",
+                    "plots/conversionRatePlots"))
+  }
+  samples<-sampleTable$SampleName
+  for (currentSample in samples) {
+    print(currentSample)
+    bamFile<-sampleTable$FileName[sampleTable$SampleName==currentSample]
+    #lists to collect plots for all regions in a particular sample
+    if (convRatePlots==TRUE) {
+      informativeCsPlots=list()
+      conversionRatePlots=list()
+    }
+    #log table to record number of reads in matrix at various steps
+    matrixLog<-data.frame(sample=rep(samples,each=length(regionGRs)),
+                          region=rep(regionGRs$ID,length(samples)),
+                          CGreads=NA, GCreads=NA, methMatReads=NA,
+                          goodConvReads=NA, fewNAreads=NA)
+    for (i in seq_along(regionGRs)) {
+      # get methylation matrices
+      regionGR<-regionGRs[i]
+      matCG<-getReadMatrix(bamFile,genomeFile,bedFileCG,regionGR)
+      matGC<-getReadMatrix(bamFile,genomeFile,bedFileGC,regionGR)
+      methMat<-1-combineCGandGCmatrices(matCG,matGC,regionGR,gnmMotifGR)
+      j<-which(matrixLog$sample==currentSample & matrixLog$region==regionGR$ID)
+      # record number of reads in the matrices
+      matrixLog[j,"CGreads"]<-dim(matCG)[1]
+      matrixLog[j,"GCreads"]<-dim(matGC)[1]
+      matrixLog[j,"methMatReads"]<-dim(methMat)[1]
+
+      # get bisulfite conversion stats for Cs in non-methylated context
+      df<-poorBisulfiteConversion(bamFile,genomeFile,bedFileC,bedFileG,regionGR)
+      removeReads<-df[df$fractionConverted<minConversionRate,"reads"]
+      methMat<-methMat[!(rownames(methMat) %in% removeReads),]
+      if (convRatePlots==TRUE) {
+        p<-ggplot(df,aes(x=informativeCs/totalCs)) + geom_histogram() +
+          ggtitle(paste0(regionGR$ID," Informative Cs per read (totalCs: ",df$totalCs[1]," )"))
+        informativeCsPlots[[regionGR$ID]]<-p
+        p<-ggplot(df,aes(x=fractionConverted)) + geom_histogram() + xlim(c(0,1)) +
+          ggtitle(paste0(regionGR$ID," Bisulfite converted Cs per read out of informative Cs"))+
+          geom_vline(xintercept=minConversionRate,col="red",linetype="dashed")
+        conversionRatePlots[[regionGR$ID]]<-p
+        matrixLog[j,"goodConvReads"]<-dim(methMat)[1]
+      }
+      # remove reads that do not cover at least 1-maxNAfraction of the cytosines
+      matrixLog[j,"fewNAreads"]<-sum(rowMeans(is.na(methMat))<maxNAfraction)
+      print(i)
+      allmats[[regionGR$ID]]<-methMat
+    }
+    if (convRatePlots==TRUE) {
+      mp<-marrangeGrob(grobs=informativeCsPlots,nrow=2,ncol=2,top=currentSample)
+      ggsave(paste0(path,"/plots/informativeCsPlots/infC_",regionType,"_",currentSample,".pdf"),
+             plot=mp, device="pdf", width=29, height=20, units="cm")
+      mp<-marrangeGrob(grobs=conversionRatePlots,nrow=2,ncol=2,top=currentSample)
+      ggsave(paste0(path,"/plots/conversionRatePlots/convR_",regionType,"_",currentSample,".pdf"),
+             plot=mp, device="pdf", width=29, height=20, units="cm")
+    }
+    allSampleMats[[currentSample]]<-allmats
+    write.csv(matrixLog,paste0(path,"/csv/LogMatrix_",regionType,".rds"))
+  }
+  return(allSampleMats)
+}
+
+
+
+
