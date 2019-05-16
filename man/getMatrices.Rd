@@ -23,13 +23,13 @@ Extract matrices into a simple list
 }
 \examples{
 getMatrices(methMats)
-will return a simple list of all regions in all samples, changing the name of the matrices
+#will return a simple list of all regions in all samples, changing the name of the matrices
 getMatrices(methMats,regionName="WBGene00009234")
-will return a simple list of the matrices for that gene from all samples
+#will return a simple list of the matrices for that gene from all samples
 getMatrices(methMats,regionName=c("WBGene00009234","WBGene00009621"))
-will return a simple list of the matrices for both those genes from all samples
+#will return a simple list of the matrices for both those genes from all samples
 getMatrices(methMats,sampleName="182_dSMFv002amp")
-will return a simple list of the matrices for all gene from this sample only
+#will return a simple list of the matrices for all gene from this sample only
 getMatrices(methMats,regionName="WBGene00009234",sampleName="182_dSMFv002amp")
-will return a single item list of a matrix for that gene in that sample.
+#will return a single item list of a matrix for that gene in that sample.
 }

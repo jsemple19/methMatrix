@@ -5,8 +5,9 @@
 \title{Single molecule plot of a methylation matrix with average methylation frequency}
 \usage{
 plotSingleMoleculesWithAvr(mat, regionName, regionGRs, featureGRs,
-  myXlab = "CpG/GpC position", featureLabel = "TSS", title = NULL,
-  baseFontSize = 11, maxNAfraction = 0.2)
+  myXlab = "CpG/GpC position", featureLabel = "TSS",
+  drawArrow = TRUE, title = NULL, baseFontSize = 11,
+  maxNAfraction = 0.2)
 }
 \arguments{
 \item{mat}{A methylation matrix}
@@ -24,10 +25,14 @@ matrices in mat}
 \item{featureLabel}{A label for a feature you want to plot, such as the position of the TSS
 (default="TSS)}
 
+\item{drawArrow}{Boolean: should the feature be drawn as an arrow or just a line? (default=TRUE)}
+
 \item{title}{A title for the plot (default will be the name of the region, the chr and strand on which
 the region is present)}
 
 \item{baseFontSize}{The base font for the plotting theme (default=11 works well for 4x plots per A4 page)}
+
+\item{maxNAfraction}{Maximual fraction of CpG/GpC positions that can be undefined (default=0.2)}
 }
 \value{
 A ggplot2 plot object
