@@ -2,7 +2,7 @@
 #' Create bed file of CpG or GpC motifs
 #'
 #' @param genomeFile String with path to fasta file with genome sequence
-#' @param CpGorGpC String with motif to be found (either "CG" or "GC")
+#' @param CGorGC String with motif to be found (either "CG" or "GC")
 #' @return A bed file with locations of the C in all occurrences of this motif on both strands will be written to
 #' the same directory as genomeFile with the extension .CpG.bed or .GpC.bed
 #'
@@ -226,22 +226,22 @@ allNAs<-function(vec) {
 #' @param matCG Methylation matrix (reads x positons) of C positions within CG motifs
 #' @param matGC Methylation matrix (reads x positons) of C positions within GC motifs
 #' @param regionGR GRanges object of region used to make methylation matrices
-#' @param gnmMotifGR GRanges object with all unique CG/GC/GCGorCGC motifs in genome
+#' @param genomeMotifGR GRanges object with all unique non-overlapping CG/GC/GCGorCGC motifs in genome
 #' @return Merged methylation matrix
 #' @export
-combineCGandGCmatrices<-function(matCG,matGC,regionGR,gnmMotifGR){
+combineCGandGCmatrices<-function(matCG,matGC,regionGR,genomeMotifGR){
   # convert matCG and matGC to genomic ranges with transposed matrix (positions x reads)
   matCGgr<-matToGR(matCG,regionGR)
   matGCgr<-matToGR(matGC,regionGR)
 
-  #subset gnmMotifGR by regionGR to get motifs that should be present in the matrices
-  regGCCG<-IRanges::subsetByOverlaps(gnmMotifGR,regionGR)
+  #subset genomeMotifGR by regionGR to get motifs that should be present in the matrices
+  regGCCG<-IRanges::subsetByOverlaps(genomeMotifGR,regionGR)
 
   # get vector of read names for each gr
   CGreads<-colnames(GenomicRanges::mcols(matCGgr))
   GCreads<-colnames(GenomicRanges::mcols(matGCgr))
 
-  # use gnmMotifGR subset to "destrand" CG and GC calls by summing positions within motifs
+  # use genomeMotifGR subset to "destrand" CG and GC calls by summing positions within motifs
   cg<-nanodsmf::applyGRonGR(regGCCG,matCGgr,CGreads,sum,na.rm=T)
   gc<-nanodsmf::applyGRonGR(regGCCG,matGCgr,GCreads,sum,na.rm=T)
 
@@ -249,8 +249,8 @@ combineCGandGCmatrices<-function(matCG,matGC,regionGR,gnmMotifGR){
   maxval1<-function(m1){
     ifelse(is.na(m1), NA, ifelse(m1>1, 1, m1))
   }
-  mcols(cg)[,2:dim(mcols(cg))[2]]<-as.data.table(maxval1(as.matrix(mcols(cg)[,2:dim(mcols(cg))[2]])))
-  mcols(gc)[,2:dim(mcols(gc))[2]]<-as.data.table(maxval1(as.matrix(mcols(gc)[,2:dim(mcols(gc))[2]])))
+  GenomicRanges::mcols(cg)[,2:dim(GenomicRanges::mcols(cg))[2]]<-data.table::as.data.table(maxval1(as.matrix(GenomicRanges::mcols(cg)[,2:dim(GenomicRanges::mcols(cg))[2]])))
+  GenomicRanges::mcols(gc)[,2:dim(GenomicRanges::mcols(gc))[2]]<-data.table::as.data.table(maxval1(as.matrix(GenomicRanges::mcols(gc)[,2:dim(GenomicRanges::mcols(gc))[2]])))
 
   # find gr that overlap between cg and gc calls
   ol<-IRanges::findOverlaps(cg,gc)
@@ -312,13 +312,13 @@ getMethFreqGR<-function(baseFileName,pathToMethCalls,motifFile,minDepth=5) {
   if (! exists("pathToMethCalls")) {pathToMethCalls="."}
   # read in methyldackel output files
   methCG<-rtracklayer::import(paste0(pathToMethCalls,"/",baseFileName,"_CpG.bedGraph"),format="bedGraph")
-  colnames(mcols(methCG))<-c("methPercent","methylated","nonMethylated")
+  colnames(GenomicRanges::mcols(methCG))<-c("methPercent","methylated","nonMethylated")
   methCG$readDepth<-rowSums(cbind(methCG$methylated,methCG$nonMethylated))
   methCG<-methCG[methCG$readDepth>minDepth]
   methCHH<-rtracklayer::import(paste0(pathToMethCalls,"/",baseFileName,"_CHH.bedGraph"),format="bedGraph")
-  colnames(mcols(methCHH))<-c("methPercent","methylated","nonMethylated")
+  colnames(GenomicRanges::mcols(methCHH))<-c("methPercent","methylated","nonMethylated")
   methCHG<-rtracklayer::import(paste0(pathToMethCalls,"/",baseFileName,"_CHG.bedGraph"),format="bedGraph")
-  colnames(mcols(methCHG))<-c("methPercent","methylated","nonMethylated")
+  colnames(GenomicRanges::mcols(methCHG))<-c("methPercent","methylated","nonMethylated")
   methNonCG<-GenomicRanges::sort(c(methCHH,methCHG))
 
   # create methGC
@@ -407,7 +407,7 @@ combineCGGCgr<-function(methFreqGR,samples) {
 #' @param genomeFile String with path to fasta file with genome sequence
 #' @param bedFileC String with path to .bed file with locations of Cs to be evaluated (for forward strand calls)
 #' @param bedFileG String with path to .bed file with locations of Gs to be evaluated (for reverse strand calls)
-#' @param region Genomic range of region for which to extract reads. It can also be a string
+#' @param regionGR Genomic range of region for which to extract reads. It can also be a string
 #' denoting the region, e.g. "X:8069396-8069886"
 #' @return A data frame with the names of the reads, the count of the number of informative Cs
 #' per region (not NAs), the maximum number of possible Cs in the regon, and the fraction of
@@ -473,6 +473,7 @@ makeDirs<-function(path,dirNameList=c()) {
 #' @param genomeFile String with path to fasta file with genome sequence
 #' @param regionGRs A genomic regions object with all regions for which matrices should be extracted. The metadata columns must contain a column called "ID" with a unique ID for that region.
 #' @param regionType A collective name for this list of regions (e.g TSS or amplicons)
+#' @param genomeMotifGR A GenomicRanges object with a unique set of non-overlapping CG, GC and GCGorCGC sites
 #' @param minConversionRate Minimal fraction of Cs from a non-methylation context that must be converted to Ts for the read to be included in the final matrix (default=0.8)
 #' @param maxNAfraction Maximual fraction of CpG/GpC positions that can be undefined (default=0.2)
 #' @param bedFilePrefix The full path and prefix of the bed file for C, G, CG and GC positions in the genome (i.e path and name of the file without the ".C.bed",".G.bed", ".CG.bed" or ".GC.bed" suffix). Defulat is NULL and assumes the bed file are in the same location as the genome sequence file.
@@ -480,7 +481,7 @@ makeDirs<-function(path,dirNameList=c()) {
 #' @param convRatePlots Boolean value: should bisulfite conversion rate plots be created for each region? (default=FALSE)
 #' @return A list (by sample) of lists (by regions) of methylation matrices
 #' @export
-getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionType,
+getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionType, genomeMotifGR,
                                     minConversionRate=0.8,maxNAfraction=0.2, bedFilePrefix=NULL,
                                     path=".", convRatePlots=FALSE) {
   allmats=list()
@@ -519,7 +520,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
       regionGR<-regionGRs[i]
       matCG<-getReadMatrix(bamFile,genomeFile,bedFileCG,regionGR)
       matGC<-getReadMatrix(bamFile,genomeFile,bedFileGC,regionGR)
-      methMat<-1-combineCGandGCmatrices(matCG,matGC,regionGR,gnmMotifGR)
+      methMat<-1-combineCGandGCmatrices(matCG,matGC,regionGR,genomeMotifGR)
       j<-which(matrixLog$sample==currentSample & matrixLog$region==regionGR$ID)
       # record number of reads in the matrices
       matrixLog[j,"CGreads"]<-dim(matCG)[1]
@@ -531,12 +532,15 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
       removeReads<-df[df$fractionConverted<minConversionRate,"reads"]
       methMat<-methMat[!(rownames(methMat) %in% removeReads),]
       if (convRatePlots==TRUE) {
-        p<-ggplot(df,aes(x=informativeCs/totalCs)) + geom_histogram() +
-          ggtitle(paste0(regionGR$ID," Informative Cs per read (totalCs: ",df$totalCs[1]," )"))
+        p<-ggplot2::ggplot(df,ggplot2::aes(x=informativeCs/totalCs)) + ggplot2::geom_histogram() +
+          ggplot2::ggtitle(paste0(regionGR$ID,
+                                  " Informative Cs per read (totalCs: ",df$totalCs[1]," )"))
         informativeCsPlots[[regionGR$ID]]<-p
-        p<-ggplot(df,aes(x=fractionConverted)) + geom_histogram() + xlim(c(0,1)) +
-          ggtitle(paste0(regionGR$ID," Bisulfite converted Cs per read out of informative Cs"))+
-          geom_vline(xintercept=minConversionRate,col="red",linetype="dashed")
+        p<-ggplot2::ggplot(df,ggplot2::aes(x=fractionConverted)) + ggplot2::geom_histogram() +
+          ggplot2::xlim(c(0,1)) +
+          ggplot2::ggtitle(paste0(regionGR$ID,
+                                  " Bisulfite converted Cs per read out of informative Cs"))+
+          ggplot2::geom_vline(xintercept=minConversionRate,col="red",linetype="dashed")
         conversionRatePlots[[regionGR$ID]]<-p
         matrixLog[j,"goodConvReads"]<-dim(methMat)[1]
       }
@@ -546,15 +550,17 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
       allmats[[regionGR$ID]]<-methMat
     }
     if (convRatePlots==TRUE) {
-      mp<-marrangeGrob(grobs=informativeCsPlots,nrow=2,ncol=2,top=currentSample)
-      ggsave(paste0(path,"/plots/informativeCsPlots/infC_",regionType,"_",currentSample,".pdf"),
+      mp<-gridExtra::marrangeGrob(grobs=informativeCsPlots,nrow=2,ncol=2,top=currentSample)
+      ggplot2::ggsave(paste0(path,"/plots/informativeCsPlots/infC_",regionType,"_",
+                             currentSample,".pdf"),
              plot=mp, device="pdf", width=29, height=20, units="cm")
-      mp<-marrangeGrob(grobs=conversionRatePlots,nrow=2,ncol=2,top=currentSample)
-      ggsave(paste0(path,"/plots/conversionRatePlots/convR_",regionType,"_",currentSample,".pdf"),
+      mp<-gridExtra::marrangeGrob(grobs=conversionRatePlots,nrow=2,ncol=2,top=currentSample)
+      ggplot2::ggsave(paste0(path,"/plots/conversionRatePlots/convR_",regionType,"_",
+                             currentSample,".pdf"),
              plot=mp, device="pdf", width=29, height=20, units="cm")
     }
     allSampleMats[[currentSample]]<-allmats
-    write.csv(matrixLog,paste0(path,"/csv/LogMatrix_",regionType,".rds"))
+    utils::write.csv(matrixLog,paste0(path,"/csv/LogMatrix_",regionType,".rds"))
   }
   return(allSampleMats)
 }

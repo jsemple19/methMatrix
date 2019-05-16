@@ -43,15 +43,15 @@ library(ggpubr)
 #' Matrices will be named with both the sample and the region name joined by "__"
 #' @examples
 #' getMatrices(methMats)
-#' will return a simple list of all regions in all samples, changing the name of the matrices
+#' #will return a simple list of all regions in all samples, changing the name of the matrices
 #' getMatrices(methMats,regionName="WBGene00009234")
-#' will return a simple list of the matrices for that gene from all samples
+#' #will return a simple list of the matrices for that gene from all samples
 #' getMatrices(methMats,regionName=c("WBGene00009234","WBGene00009621"))
-#' will return a simple list of the matrices for both those genes from all samples
+#' #will return a simple list of the matrices for both those genes from all samples
 #' getMatrices(methMats,sampleName="182_dSMFv002amp")
-#' will return a simple list of the matrices for all gene from this sample only
+#' #will return a simple list of the matrices for all gene from this sample only
 #' getMatrices(methMats,regionName="WBGene00009234",sampleName="182_dSMFv002amp")
-#' will return a single item list of a matrix for that gene in that sample.
+#' #will return a single item list of a matrix for that gene in that sample.
 #' @export
 getMatrices<-function(methMats,regionName=c(),sampleName=c()) {
   # extracts a simple list of matrices. It is possible to also subset by regionName or sampleName
@@ -101,8 +101,8 @@ getRelativeCoord<-function(mat,regionGR,invert=F){
   # converts matrix from absolute genome coordinates to
   # relative coordinates within a genomic Range
   pos<-as.numeric(colnames(mat))
-  regionStart<-start(regionGR)
-  regionEnd<-end(regionGR)
+  regionStart<-GenomicRanges::start(regionGR)
+  regionEnd<-GenomicRanges::end(regionGR)
   if (invert==F) {
     newPos<-pos-regionStart
     colnames(mat)<-as.character(newPos)
@@ -119,7 +119,7 @@ getRelativeCoord<-function(mat,regionGR,invert=F){
 #' Change the anchor coordinate
 #'
 #' @param mat A methylation matrix
-#' @param amchorCoord The coordinate which will be set as the 0 position for relative coordinates
+#' @param anchorCoord The coordinate which will be set as the 0 position for relative coordinates
 #' (default=0)
 #' @return A methylation matrix in which the column names have been changed to indicate relative position
 #' with reference to the anchor coordinate. e.g. a 500bp matrix centered around the TSS can have its column
@@ -171,7 +171,7 @@ getRelativeCoordMats<-function(matList,regionGRs,anchorCoord=0) {
     if(sum(dim(mat)==c(0,0))<1) {
       regionID<-names(matList)[x]
       regionGR<-regionGRs[regionGRs$ID==regionID]
-      newMat<-getRelativeCoord(mat,regionGR,invert=ifelse(strand(regionGR)=="+",F,T))
+      newMat<-getRelativeCoord(mat,regionGR,invert=ifelse(GenomicRanges::strand(regionGR)=="+",F,T))
       newMat<-changeAnchorCoord(mat=newMat,anchorCoord=anchorCoord)
       newMat
     } else {
@@ -200,7 +200,7 @@ getMetaMethFreq<-function(matList,regionGRs,minReads=50) {
       vecSummary<-colMeans(matList[[i]],na.rm=T)
       df<-data.frame("position"=names(vecSummary),"methFreq"=vecSummary)
       df$ID<-names(matList)[i]
-      df$chr<-as.character(seqnames(regionGRs)[match(names(matList)[i],regionGRs$ID)])
+      df$chr<-as.character(GenomicRanges::seqnames(regionGRs)[match(names(matList)[i],regionGRs$ID)])
       if (exists("methFreqDF")){
         methFreqDF<-rbind(methFreqDF,df)
       } else {
@@ -254,7 +254,7 @@ plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs="", myXlab="
     mat[na.matrix]<- -1
     # try to perform heirarchical clustering
     hc <- try(
-      hclust(dist(apply(mat,2,as.numeric))),
+      stats::hclust(stats::dist(apply(mat,2,as.numeric))),
       silent = TRUE)
     mat[na.matrix]<-NA
     if (class(hc) == "try-error") {
@@ -277,32 +277,34 @@ plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs="", myXlab="
                          paste0(GenomicRanges::strand(regionGR),"ve strand"))
       title=paste0(regionName, ": ",GenomicRanges::seqnames(regionGR)," ",strandInfo)
     }
-    p<-ggplot2::ggplot(d,aes(x=position,y=molecules,width=2)) +
-      ggplot2::geom_tile(aes(width=3,fill=methylation),alpha=0.8) +
+    p<-ggplot2::ggplot(d,ggplot2::aes(x=position,y=molecules,width=2)) +
+      ggplot2::geom_tile(ggplot2::aes(width=3,fill=methylation),alpha=0.8) +
       ggplot2::scale_fill_gradient(low="blue", high="red", na.value="transparent",
                                    breaks=c(0,1), labels=c("protected","accessible"),
                                    limits=c(0,1), name="dSMF\n\n") +
       #ggplot2::scale_fill_manual(values=c("0"="black","1"="grey80"),na.translate=F,na.value="white", labels=c("protected","accessible"),name="dSMF") +
       ggplot2::theme_light(base_size=baseFontSize) +
-      ggplot2::theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-            plot.title = element_text(face = "bold",hjust = 0.5),
-            legend.position="bottom", legend.key.height = unit(0.2, "cm"),
-            legend.key.width=unit(0.5,"cm")) +
+      ggplot2::theme(panel.grid.major = ggplot2::element_blank(),
+                     panel.grid.minor = ggplot2::element_blank(),
+            plot.title = ggplot2::element_text(face = "bold",hjust = 0.5),
+            legend.position="bottom", legend.key.height = ggplot2::unit(0.2, "cm"),
+            legend.key.width=ggplot2::unit(0.5,"cm")) +
       ggplot2::ggtitle(title) +
       ggplot2::xlab(myXlab) +
       ggplot2::ylab("Single molecules") +
-      ggplot2::xlim(start(regionGR),end(regionGR)+10)
+      ggplot2::xlim(GenomicRanges::start(regionGR),GenomicRanges::end(regionGR)+10)
     if(length(featureGRs)>0) {
-      p<-p+ggplot2::geom_linerange(aes(x=start(featGR), y=NULL, ymin=0,
+      p<-p+ggplot2::geom_linerange(ggplot2::aes(x=GenomicRanges::start(featGR), y=NULL, ymin=0,
                                        ymax=length(reads)+max(3,0.04*length(reads))),col="black")+
-        ggplot2::annotate(geom="text", x=start(featGR), y=-max(2,0.03*length(reads)),
+        ggplot2::annotate(geom="text", x=GenomicRanges::start(featGR), y=-max(2,0.03*length(reads)),
                           label=featureLabel,color="black")
       if (drawArrow==TRUE) {
-        p<-p+ggplot2::annotate("segment", x = start(featGR),
-                          xend = start(featGR)+20*ifelse(strand(featGR)=="-",-1,1),
+        p<-p+ggplot2::annotate("segment", x = GenomicRanges::start(featGR),
+                          xend = GenomicRanges::start(featGR)+
+                            20*ifelse(GenomicRanges::strand(featGR)=="-",-1,1),
                           y = length(reads)+max(3,0.04*length(reads)),
                           yend =length(reads)+max(3,0.04*length(reads)),
-                          colour = "black", arrow=arrow(length = unit(0.3, "cm")), size=0.7)
+                          colour = "black", arrow=ggplot2::arrow(length = ggplot2::unit(0.3, "cm")), size=0.7)
       }
 
     }
@@ -347,7 +349,7 @@ plotSingleMoleculesWithAvr<-function(mat, regionName, regionGRs, featureGRs,
     mat[na.matrix]<--1
     # try to perform heirarchical clustering
     hc <- try(
-      hclust(dist(apply(mat,2,as.numeric))),
+      stats::hclust(stats::dist(apply(mat,2,as.numeric))),
       silent = TRUE)
     mat[na.matrix]<-NA
     if (class(hc) == "try-error") {
@@ -372,54 +374,62 @@ plotSingleMoleculesWithAvr<-function(mat, regionName, regionGRs, featureGRs,
     }
     dAvr<-data.frame(position=as.numeric(colnames(df)),dSMF=1-colSums(df,na.rm=T)/length(reads))
     # average plot
-    p1<-ggplot2::ggplot(dAvr,aes(x=position,y=dSMF,group=1)) +
+    p1<-ggplot2::ggplot(dAvr,ggplot2::aes(x=position,y=dSMF,group=1)) +
       ggplot2::geom_point()+
       ggplot2::geom_line(size=1,show.legend=F) +
       ggplot2::guides(fill=FALSE, color=FALSE) +
       ggplot2::theme_light(base_size=baseFontSize) +
       ggplot2::ylab("Mean dSMF") +
-      ggplot2::theme(axis.title.x = element_blank(), axis.text.x = element_blank()) +
+      ggplot2::theme(axis.title.x = ggplot2::element_blank(),
+                     axis.text.x = ggplot2::element_blank()) +
       ggplot2::ylim(0,1) +
-      ggplot2::xlim(start(regionGR),end(regionGR)+20)
+      ggplot2::xlim(GenomicRanges::start(regionGR),GenomicRanges::end(regionGR)+20)
     if (length(featureGRs)>0) { # plot feature if present
-      p1<-p1 + ggplot2::geom_linerange(aes(x=start(featGR), y=NULL, ymin=0, ymax=1),
+      p1<-p1 + ggplot2::geom_linerange(ggplot2::aes(x=GenomicRanges::start(featGR),
+                                                    y=NULL, ymin=0, ymax=1),
                                        col="black",size=0.7)
       if (drawArrow==TRUE) {
-        p1<-p1+ggplot2::annotate("segment", x = start(featGR),
-                              xend = start(featGR)+20*ifelse(strand(featGR)=="-",-1,1),
+        p1<-p1+ggplot2::annotate("segment", x = GenomicRanges::start(featGR),
+                              xend = GenomicRanges::start(featGR)+
+                                20*ifelse(GenomicRanges::strand(featGR)=="-",-1,1),
                               y = 1, yend = 1, colour = "black", size=0.7,
-                              arrow=arrow(length = unit(0.2, "cm")))
+                              arrow=ggplot2::arrow(length = ggplot2::unit(0.2, "cm")))
       }
     }
     #singel molecule plot
-    p2<-ggplot2::ggplot(d,aes(x=position,y=molecules,width=2)) +
-      ggplot2::geom_tile(aes(width=3,fill=methylation),alpha=0.8) +
+    p2<-ggplot2::ggplot(d,ggplot2::aes(x=position,y=molecules,width=2)) +
+      ggplot2::geom_tile(ggplot2::aes(width=3,fill=methylation),alpha=0.8) +
       ggplot2::scale_fill_gradient(low="blue", high="red", na.value="transparent",
                                    breaks=c(0,1), labels=c("protected","accessible"),
                                    limits=c(0,1), name="dSMF\n\n") +
       ggplot2::theme_light(base_size=baseFontSize) +
-      ggplot2::theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-                     plot.title = element_blank(),legend.position="bottom",
-                     legend.key.height = unit(0.2, "cm"), legend.key.width=unit(0.5,"cm")) +
+      ggplot2::theme(panel.grid.major = ggplot2::element_blank(),
+                     panel.grid.minor = ggplot2::element_blank(),
+                     plot.title = ggplot2::element_blank(), legend.position="bottom",
+                     legend.key.height = ggplot2::unit(0.2, "cm"),
+                     legend.key.width=ggplot2::unit(0.5,"cm")) +
       ggplot2::xlab(myXlab) +
       ggplot2::ylab("Single molecules") +
-      ggplot2::xlim(start(regionGR),end(regionGR)+20)
+      ggplot2::xlim(GenomicRanges::start(regionGR),GenomicRanges::end(regionGR)+20)
     if (length(featureGRs)>0) { # plot feature if present
-      p2<-p2+ggplot2::geom_linerange(aes(x=start(featGR), y=NULL, ymin=0,
+      p2<-p2+ggplot2::geom_linerange(ggplot2::aes(x=GenomicRanges::start(featGR), y=NULL, ymin=0,
                                          ymax=length(reads)+max(3,0.04*length(reads))), col="black") +
-             ggplot2::annotate(geom="text", x=start(featGR), y=-max(2,0.03*length(reads)),
+             ggplot2::annotate(geom="text", x=GenomicRanges::start(featGR),
+                               y=-max(2,0.03*length(reads)),
                           label=featureLabel, color="black")
 
         if (drawArrow==TRUE) {
-          p2<-p2+ggplot2::annotate("segment", x = start(featGR),
-                                 xend = start(featGR)+20*ifelse(strand(featGR)=="-",-1,1),
+          p2<-p2+ggplot2::annotate("segment", x = GenomicRanges::start(featGR),
+                                 xend = GenomicRanges::start(featGR)+
+                                   20*ifelse(GenomicRanges::strand(featGR)=="-",-1,1),
                                  y = length(reads)+max(3,0.04*length(reads)),
                                  yend =length(reads)+max(3,0.04*length(reads)),
-                                 colour = "black", arrow=arrow(length = unit(0.3, "cm")), size=0.7)
+                                 colour = "black", size=0.7,
+                                 arrow=ggplot2::arrow(length = ggplot2::unit(0.3, "cm")))
         }
     }
     figure<-ggpubr::ggarrange(p1, p2, heights = c(0.5, 2), ncol = 1, nrow = 2, align = "v")
-    figure<-ggpubr::annotate_figure(figure, top = text_grob(title, face = "bold"))
+    figure<-ggpubr::annotate_figure(figure, top = ggpubr::text_grob(title, face = "bold"))
   } else {
     figure=NULL
   }
@@ -448,6 +458,7 @@ plotSingleMoleculesWithAvr<-function(mat, regionName, regionGRs, featureGRs,
 plotAllMatrices<-function(allSampleMats, samples, regionGRs, featureGRs, regionType,
                           featureLabel="TSS", maxNAfraction=0.2,withAvr=FALSE,
                           includeInFileName="", drawArrow=TRUE) {
+  path="."
   # get list of all regions in the object
   allAmp2plot<-unique(unlist(lapply(allSampleMats,function(x){names(x)})))
   # plot single molecule matrices on their own
@@ -490,15 +501,15 @@ plotAllMatrices<-function(allSampleMats, samples, regionGRs, featureGRs, regionT
                        paste0("reg: ",GenomicRanges::strand(regionGR),"ve, ",
                               featureLabel,": ",GenomicRanges::strand(featGR),"ve strand"),
                        paste0(GenomicRanges::strand(regionGR),"ve strand"))
-    title<-paste0(regionName, ": ",chr," ",strandInfo)
+    title<-paste0(i, ": ",chr," ",strandInfo)
     spacer<-ifelse(length(includeInFileName)>0,"_","")
-    mp<-marrangeGrob(grobs=plotList,nrow=2,ncol=2,top=title)
+    mp<-gridExtra::marrangeGrob(grobs=plotList,nrow=2,ncol=2,top=title)
     if (withAvr==TRUE) {
-      ggsave(paste0(path,"/plots/singleMoleculePlotsAvr_",regionType,"/",chr,"_",i,
+      ggplot2::ggsave(paste0(path,"/plots/singleMoleculePlotsAvr_",regionType,"/",chr,"_",i,
                     spacer,includeInFileName,".png"),
              plot=mp, device="png", width=20, height=29, units="cm")
     } else {
-      ggsave(paste0(path,"/plots/singleMoleculePlots_",regionType,"/",chr,"_",i,
+      ggplot2::ggsave(paste0(path,"/plots/singleMoleculePlots_",regionType,"/",chr,"_",i,
                     spacer, includeInFileName,".png"),
              plot=mp, device="png", width=29, height=20, units="cm")
     }
@@ -513,7 +524,7 @@ plotAllMatrices<-function(allSampleMats, samples, regionGRs, featureGRs, regionT
 #' 0 to 500). The original start end and strand are stored in the metadata.
 #' @param grs A GenomicRanges object to be converted to relative coordinates
 #' @param winSize The size of the window you wish to create
-#' @anchorPoint One of "middle" or "start": the position from which numbering starts
+#' @param anchorPoint One of "middle" or "start": the position from which numbering starts
 #' @return A GenomicRanges object with relative coordinate numbering
 #' @export
 convertGRtoRelCoord<-function(grs,winSize,anchorPoint="middle") {
@@ -583,20 +594,20 @@ plotDSMFmetageneDF<-function(metageneDF,maxPoints=10000) {
     idx<-1:nrow(metageneDF)
   }
 
-  p1<-ggplot(metageneDF[idx,],aes(x=position,y=1-methFreq)) +
-    theme_light(base_size=16) + ylim(0,1) +
-    xlab("Position relative to TSS") + ylab("dSMF (1-%methylation)") +
-    geom_linerange(aes(x=0, y=NULL, ymin=0, ymax=1),color="steelblue",size=1) +
-    geom_point(alpha=0.1) +
-    geom_smooth(colour="red",fill="red") +
-    facet_wrap(~sample)
+  p1<-ggplot2::ggplot(metageneDF[idx,],ggplot2::aes(x=position,y=1-methFreq)) +
+    ggplot2::theme_light(base_size=16) + ggplot2::ylim(0,1) +
+    ggplot2::xlab("Position relative to TSS") + ggplot2::ylab("dSMF (1-%methylation)") +
+    ggplot2::geom_linerange(ggplot2::aes(x=0, y=NULL, ymin=0, ymax=1),color="steelblue",size=1) +
+    ggplot2::geom_point(alpha=0.1) +
+    ggplot2::geom_smooth(colour="red",fill="red") +
+    ggplot2::facet_wrap(~sample)
 
-  p2<-ggplot(metageneDF,aes(x=position,y=1-methFreq,colour=sample)) +
-    theme_light(base_size=16) + ylim(0,1) +
-    xlab("Position relative to TSS") + ylab("dSMF (1-%methylation)") +
-    geom_linerange(aes(x=0, y=NULL, ymin=0, ymax=1),color="steelblue",size=1) +
-    geom_smooth(se=FALSE)
+  p2<-ggplot2::ggplot(metageneDF,ggplot2::aes(x=position,y=1-methFreq,colour=sample)) +
+    ggplot2::theme_light(base_size=16) + ggplot2::ylim(0,1) +
+    ggplot2::xlab("Position relative to TSS") + ggplot2::ylab("dSMF (1-%methylation)") +
+    ggplot2::geom_linerange(ggplot2::aes(x=0, y=NULL, ymin=0, ymax=1),color="steelblue",size=1) +
+    ggplot2::geom_smooth(se=FALSE)
 
-  ml <- marrangeGrob(list(p1,p2), nrow=1, ncol=1)
+  ml <- gridExtra::marrangeGrob(list(p1,p2), nrow=1, ncol=1)
   return(ml)
 }
