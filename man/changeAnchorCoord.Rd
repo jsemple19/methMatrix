@@ -9,7 +9,7 @@ changeAnchorCoord(mat, anchorCoord = 0)
 \arguments{
 \item{mat}{A methylation matrix}
 
-\item{amchorCoord}{The coordinate which will be set as the 0 position for relative coordinates
+\item{anchorCoord}{The coordinate which will be set as the 0 position for relative coordinates
 (default=0)}
 }
 \value{

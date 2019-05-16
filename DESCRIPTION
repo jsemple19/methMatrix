@@ -11,12 +11,19 @@ RoxygenNote: 6.1.1
 Depends:  R (>= 3.5.1), 
           GenomicRanges, 
           ggplot2, 
-          magrittr
-Imports:  Biostrings, 
-          GenomicRanges, 
-          ggplot2, 
-          IRanges, 
-          magrittr
+          magrittr,
+          GenomeInfoDb,
+          S4Vectors,
+          ggpubr,
+          nanodsmf,
+          rtracklayer,
+          stringr,
+          tibble,
+          tidyr,
+          data.table,
+          gridExtra,
+          Biostrings
+Imports:  
 Suggests: 
     knitr,
     rmarkdown

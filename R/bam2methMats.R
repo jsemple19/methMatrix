@@ -185,6 +185,7 @@ matToGR<-function(mat,gr) {
 #' allNAs(c(1,2,3))
 #' allNAs(c())
 #' @return boolean TRUE or FALSE
+#' @export
 allNAs<-function(vec) {
   if (sum(is.na(vec)) == length(vec))  {
     returnVal=TRUE
@@ -444,8 +445,9 @@ poorBisulfiteConversion<-function(bamFile,genomeFile,bedFileC,bedFileG,regionGR)
 #' @param path String with path to where the directories should be made
 #' @param dirNameList Vector of strings with names of directories to create (can include multilevel directories)
 #' @return Creates the directories listed in dirNameList
-#' @example
+#' @examples
 #' makeDirs(path=".",dirNameList=c("/txt","/rds/sample1"))
+#' @export
 makeDirs<-function(path,dirNameList=c()) {
   for (d in dirNameList) {
     if (!dir.exists(paste0(path,"/",d))){  # for alignments
