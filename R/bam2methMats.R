@@ -487,7 +487,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
                                     minConversionRate=0.8,maxNAfraction=0.2, bedFilePrefix=NULL,
                                     path=".", convRatePlots=FALSE) {
   allmats=list()
-  allSamplemats=list()
+  allSampleMats=list()
   #create pathnames to bedfiles
   if (is.null(bedFilePrefix)){
     bedFilePrefix=gsub("\\.fa","", genomeFile)
