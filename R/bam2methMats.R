@@ -243,8 +243,8 @@ combineCGandGCmatrices<-function(matCG,matGC,regionGR,genomeMotifGR){
   GCreads<-colnames(GenomicRanges::mcols(matGCgr))
 
   # use genomeMotifGR subset to "destrand" CG and GC calls by summing positions within motifs
-  cg<-nanodsmf::applyGRonGR(regGCCG,matCGgr,CGreads,sum,na.rm=T)
-  gc<-nanodsmf::applyGRonGR(regGCCG,matGCgr,GCreads,sum,na.rm=T)
+  cg<-applyGRonGR(regGCCG,matCGgr,CGreads,sum,na.rm=T)
+  gc<-applyGRonGR(regGCCG,matGCgr,GCreads,sum,na.rm=T)
 
   # ensure no value in the matrix exceeds 1
   maxval1<-function(m1){
