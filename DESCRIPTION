@@ -19,7 +19,8 @@ Depends:  R (>= 3.5.1),
           stringr,
           tibble,
           tidyr,
-          data.table,
+          data.table
+          grangesutils,
           gridExtra,
           Biostrings
 Imports:  
