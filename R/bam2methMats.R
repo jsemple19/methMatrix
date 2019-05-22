@@ -562,7 +562,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
              plot=mp, device="pdf", width=29, height=20, units="cm")
     }
     allSampleMats[[currentSample]]<-allmats
-    utils::write.csv(matrixLog,paste0(path,"/csv/LogMatrix_",regionType,".rds"))
+    utils::write.csv(matrixLog,paste0(path,"/csv/LogMatrix_",regionType,".csv"))
   }
   return(allSampleMats)
 }
