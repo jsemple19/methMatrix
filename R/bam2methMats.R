@@ -504,6 +504,13 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
                     "plots/conversionRatePlots"))
   }
   samples<-sampleTable$SampleName
+
+  #log table to record number of reads in matrix at various steps
+  matrixLog<-data.frame(sample=rep(samples,each=length(regionGRs)),
+                        region=rep(regionGRs$ID,length(samples)),
+                        CGreads=NA, GCreads=NA, methMatReads=NA,
+                        goodConvReads=NA, fewNAreads=NA)
+
   for (currentSample in samples) {
     print(currentSample)
     bamFile<-sampleTable$FileName[sampleTable$SampleName==currentSample]
@@ -512,11 +519,6 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
       informativeCsPlots=list()
       conversionRatePlots=list()
     }
-    #log table to record number of reads in matrix at various steps
-    matrixLog<-data.frame(sample=rep(samples,each=length(regionGRs)),
-                          region=rep(regionGRs$ID,length(samples)),
-                          CGreads=NA, GCreads=NA, methMatReads=NA,
-                          goodConvReads=NA, fewNAreads=NA)
     for (i in seq_along(regionGRs)) {
       # get methylation matrices
       regionGR<-regionGRs[i]
