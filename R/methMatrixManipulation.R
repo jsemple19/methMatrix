@@ -243,7 +243,7 @@ plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs="", myXlab="
   # appears. featureGRs is genomic ranges object for plotting location of some feature in
   # the region, such as the TSS. myXlab is the X axis label. featureLabel is the label for
   # the type of feature that will be plotted underneath the feature
-  tooManyNAs<-rowSums(is.na(mat))/dim(mat)[2]>maxNAfraction
+  tooManyNAs<-rowSums(is.na(mat))/dim(mat)[1]>maxNAfraction
   mat<-mat[!tooManyNAs,]
   if (!is.null(dim(mat)) & any(dim(mat)[1]>10)) {
     regionGR<-regionGRs[match(regionName,regionGRs$ID)]
@@ -338,7 +338,7 @@ plotSingleMoleculesWithAvr<-function(mat, regionName, regionGRs, featureGRs,
                                      myXlab="CpG/GpC position", featureLabel="TSS", drawArrow=TRUE,
                                      title=NULL, baseFontSize=11, maxNAfraction=0.2) {
   # remove reads with more than maxNAfraction positions with NAs
-  tooManyNAs<-rowSums(is.na(mat))/dim(mat)[2]>maxNAfraction
+  tooManyNAs<-rowSums(is.na(mat))/dim(mat)[1]>maxNAfraction
   mat<-mat[!tooManyNAs,]
   if(!is.null(dim(mat)) & any(dim(mat)[1]>10)) {
     regionGR<-regionGRs[match(regionName,regionGRs$ID)]
@@ -475,6 +475,7 @@ plotAllMatrices<-function(allSampleMats, samples, regionGRs, featureGRs, regionT
       maxReads=10000
       if (!is.null(dim(mat))) {
         if (dim(mat)[1]>maxReads) { # if matrix contains more than 10000 reads, do a random subsample
+          set.seed(1)
           chooseRows<-sample(1:dim(mat)[1],maxReads)
           mat<-mat[chooseRows,]
         }
@@ -589,6 +590,7 @@ getAllSampleMetaMethFreq<-function(relCoordMats,samples,regionGRs,minReads=10) {
 plotDSMFmetageneDF<-function(metageneDF,maxPoints=10000) {
   # subsample if too many points
   if (nrow(metageneDF)>maxPoints) {
+    set.seed(1)
     idx<-sample(1:nrow(metageneDF),maxPoints)
   } else {
     idx<-1:nrow(metageneDF)
