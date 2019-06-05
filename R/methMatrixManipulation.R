@@ -243,7 +243,7 @@ plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs="", myXlab="
   # appears. featureGRs is genomic ranges object for plotting location of some feature in
   # the region, such as the TSS. myXlab is the X axis label. featureLabel is the label for
   # the type of feature that will be plotted underneath the feature
-  tooManyNAs<-rowSums(is.na(mat))/dim(mat)[1]>maxNAfraction
+  tooManyNAs<-rowMeans(is.na(mat))>maxNAfraction
   mat<-mat[!tooManyNAs,]
   if (!is.null(dim(mat)) & any(dim(mat)[1]>10)) {
     regionGR<-regionGRs[match(regionName,regionGRs$ID)]
@@ -338,7 +338,7 @@ plotSingleMoleculesWithAvr<-function(mat, regionName, regionGRs, featureGRs,
                                      myXlab="CpG/GpC position", featureLabel="TSS", drawArrow=TRUE,
                                      title=NULL, baseFontSize=11, maxNAfraction=0.2) {
   # remove reads with more than maxNAfraction positions with NAs
-  tooManyNAs<-rowSums(is.na(mat))/dim(mat)[1]>maxNAfraction
+  tooManyNAs<-rowMeans(is.na(mat))>maxNAfraction
   mat<-mat[!tooManyNAs,]
   if(!is.null(dim(mat)) & any(dim(mat)[1]>10)) {
     regionGR<-regionGRs[match(regionName,regionGRs$ID)]
