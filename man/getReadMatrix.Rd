@@ -18,8 +18,7 @@ denoting the region, e.g. "X:8069396-8069886"}
 }
 \value{
 A matrix with reads as row names and C positions as column names.
-Every position in matrix has a value of 0 (methylated), 1 (not methylated) or
-NA (undetermined)
+Every position in matrix has a value of 0 (non-converted C = methylated), 1 (converted C (T) = not methylated) or NA (undetermined)
 }
 \description{
 Extract methylation matrix from alignment file

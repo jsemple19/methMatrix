@@ -10,7 +10,7 @@ pileupToConversionStatus(pileupLine)
 \item{pileupLine}{One line data frame from pileup file. Columns have been named: c("chr","start","ref","count","matches","BQ","reads")}
 }
 \value{
-A data frame with C position, read name and methylation call  0 (not methylated), 1 (methylated)
+A data frame with C position, read name and C conversion call  0 (not converted (C) = methylated), 1 (converted (T) = not methylated)
 }
 \description{
 Extract methylation calls from single line of pileup file

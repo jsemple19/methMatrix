@@ -41,8 +41,7 @@ makeCGorGCbed<-function(genomeFile,CGorGC) {
 #' @param region Genomic range of region for which to extract reads. It can also be a string
 #' denoting the region, e.g. "X:8069396-8069886"
 #' @return A matrix with reads as row names and C positions as column names.
-#' Every position in matrix has a value of 0 (methylated), 1 (not methylated) or
-#' NA (undetermined)
+#' Every position in matrix has a value of 0 (non-converted C = methylated), 1 (converted C (T) = not methylated) or NA (undetermined)
 #'
 #' @export
 getReadMatrix<-function(bamFile,genomeFile,bedFile,region) {
@@ -51,7 +50,8 @@ getReadMatrix<-function(bamFile,genomeFile,bedFile,region) {
   }
   # use samtools mpileup to call C methylation
   tab<-system(paste0("samtools mpileup -f ",genomeFile," -l ",bedFile," -r ",region,
-                "  --output-QNAME ",bamFile),intern=T)
+                "  --output-QNAME --max-depth 100000 --min-BQ 8 ",
+                " --ff UNMAP,QCFAIL ",bamFile),intern=T)
   # convert output to data frame
   tab<-lapply(tab,strsplit,"\t")
   tab<-lapply(1:length(tab),function(x){t(tab[[x]][[1]])})
@@ -78,7 +78,7 @@ getReadMatrix<-function(bamFile,genomeFile,bedFile,region) {
 #' Extract methylation calls from single line of pileup file
 #'
 #' @param pileupLine One line data frame from pileup file. Columns have been named: c("chr","start","ref","count","matches","BQ","reads")
-#' @return A data frame with C position, read name and methylation call  0 (not methylated), 1 (methylated)
+#' @return A data frame with C position, read name and C conversion call  0 (not converted (C) = methylated), 1 (converted (T) = not methylated)
 #' @export
 pileupToConversionStatus<-function(pileupLine) {
   # if read matches forward strand
@@ -520,10 +520,11 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
       conversionRatePlots=list()
     }
     for (i in seq_along(regionGRs)) {
-      # get methylation matrices
+      # get C conversion matrices
       regionGR<-regionGRs[i]
       matCG<-getReadMatrix(bamFile,genomeFile,bedFileCG,regionGR)
       matGC<-getReadMatrix(bamFile,genomeFile,bedFileGC,regionGR)
+      # combine CG and GC matrices and change conversion=1 to methylation=1
       methMat<-1-combineCGandGCmatrices(matCG,matGC,regionGR,genomeMotifGR)
       j<-which(matrixLog$sample==currentSample & matrixLog$region==regionGR$ID)
       # record number of reads in the matrices
@@ -548,7 +549,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
         conversionRatePlots[[regionGR$ID]]<-p
         matrixLog[j,"goodConvReads"]<-dim(methMat)[1]
       }
-      # remove reads that do not cover at least 1-maxNAfraction of the cytosines
+      # count reads that do not cover at least 1-maxNAfraction of the cytosines
       matrixLog[j,"fewNAreads"]<-sum(rowMeans(is.na(methMat))<maxNAfraction)
       print(i)
       allmats[[regionGR$ID]]<-methMat
