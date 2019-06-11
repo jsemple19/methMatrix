@@ -486,8 +486,8 @@ makeDirs<-function(path,dirNameList=c()) {
 getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionType, genomeMotifGR,
                                     minConversionRate=0.8,maxNAfraction=0.2, bedFilePrefix=NULL,
                                     path=".", convRatePlots=FALSE) {
-  allmats=list()
-  allSampleMats=list()
+  #allmats=list()
+  #allSampleMats=list()
   #create pathnames to bedfiles
   if (is.null(bedFilePrefix)){
     bedFilePrefix=gsub("\\.fa","", genomeFile)
@@ -498,7 +498,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
   bedFileGC=paste0(bedFilePrefix,".GC.bed")
 
   # make output directories
-  makeDirs(path,c("csv", "rds"))
+  makeDirs(path,c("csv", "rds/methMats"))
   if (convRatePlots==TRUE) {
     makeDirs(path,c("plots/informativeCsPlots",
                     "plots/conversionRatePlots"))
@@ -506,8 +506,9 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
   samples<-sampleTable$SampleName
 
   #log table to record number of reads in matrix at various steps
-  matrixLog<-data.frame(sample=rep(samples,each=length(regionGRs)),
+  matrixLog<-data.frame(filename=NA,sample=rep(samples,each=length(regionGRs)),
                         region=rep(regionGRs$ID,length(samples)),
+                        numCGpos=NA, numGCpos=NA, numUniquePos=NA,
                         CGreads=NA, GCreads=NA, methMatReads=NA,
                         goodConvReads=NA, fewNAreads=NA)
 
@@ -516,8 +517,8 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
     bamFile<-sampleTable$FileName[sampleTable$SampleName==currentSample]
     #lists to collect plots for all regions in a particular sample
     if (convRatePlots==TRUE) {
-      informativeCsPlots=list()
-      conversionRatePlots=list()
+      informativeCsPlots=vector()
+      conversionRatePlots=vector()
     }
     for (i in seq_along(regionGRs)) {
       # get C conversion matrices
@@ -528,6 +529,9 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
       methMat<-1-combineCGandGCmatrices(matCG,matGC,regionGR,genomeMotifGR)
       j<-which(matrixLog$sample==currentSample & matrixLog$region==regionGR$ID)
       # record number of reads in the matrices
+      matrixLog[j,"numCGpos"]<-dim(matCG)[2]
+      matrixLog[j,"numGCpos"]<-dim(matGC)[2]
+      matrixLog[j,"numUniquePos"]<-dim(methMat)[2]
       matrixLog[j,"CGreads"]<-dim(matCG)[1]
       matrixLog[j,"GCreads"]<-dim(matGC)[1]
       matrixLog[j,"methMatReads"]<-dim(methMat)[1]
@@ -536,38 +540,44 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
       df<-poorBisulfiteConversion(bamFile,genomeFile,bedFileC,bedFileG,regionGR)
       removeReads<-df[df$fractionConverted<minConversionRate,"reads"]
       methMat<-methMat[!(rownames(methMat) %in% removeReads),]
+      matrixLog[j,"goodConvReads"]<-dim(methMat)[1]
       if (convRatePlots==TRUE) {
+        ## plot histogram of number informative Cs per read
         p<-ggplot2::ggplot(df,ggplot2::aes(x=informativeCs/totalCs)) + ggplot2::geom_histogram() +
           ggplot2::ggtitle(paste0(regionGR$ID,
                                   " Informative Cs per read (totalCs: ",df$totalCs[1]," )"))
-        informativeCsPlots[[regionGR$ID]]<-p
+        # save to file
+        plotName<-paste0(path,"/plots/informativeCsPlots/infC_",regionType,"_",
+                         currentSample,"_",regionGR$ID,".pdf")
+        ggplot2::ggsave(plotName, plot=p, device="pdf", width=7.25, height=5, units="cm")
+        informativeCsPlots<-c(informativeCsPlots,plotName)
+        ## plot histogram of number of bisulfite converted Cs per read as fraction of informative Cs
         p<-ggplot2::ggplot(df,ggplot2::aes(x=fractionConverted)) + ggplot2::geom_histogram() +
           ggplot2::xlim(c(0,1)) +
           ggplot2::ggtitle(paste0(regionGR$ID,
                                   " Bisulfite converted Cs per read out of informative Cs"))+
           ggplot2::geom_vline(xintercept=minConversionRate,col="red",linetype="dashed")
-        conversionRatePlots[[regionGR$ID]]<-p
-        matrixLog[j,"goodConvReads"]<-dim(methMat)[1]
+        # save to file
+        plotName<-paste0(path,"/plots/conversionRatePlots/convR_",regionType,"_",
+                         currentSample,"_",regionGR$ID,".pdf")
+        ggplot2::ggsave(plotName, plot=p, device="pdf", width=7.25, height=5, units="cm")
+        conversionRatePlots<-c(conversionRatePlots,plotName)
       }
       # count reads that do not cover at least 1-maxNAfraction of the cytosines
       matrixLog[j,"fewNAreads"]<-sum(rowMeans(is.na(methMat))<maxNAfraction)
       print(i)
-      allmats[[regionGR$ID]]<-methMat
+      matName<-paste0(path,"/rds/methMats/",regionType,"_",currentSample,"_",regionGR$ID,".rds")
+      saveRDS(methMat,file=matName)
+      matrixLog[j,"filename"]<-matName
+      #allmats[[regionGR$ID]]<-methMat
     }
     if (convRatePlots==TRUE) {
-      mp<-gridExtra::marrangeGrob(grobs=informativeCsPlots,nrow=2,ncol=2,top=currentSample)
-      ggplot2::ggsave(paste0(path,"/plots/informativeCsPlots/infC_",regionType,"_",
-                             currentSample,".pdf"),
-             plot=mp, device="pdf", width=29, height=20, units="cm")
-      mp<-gridExtra::marrangeGrob(grobs=conversionRatePlots,nrow=2,ncol=2,top=currentSample)
-      ggplot2::ggsave(paste0(path,"/plots/conversionRatePlots/convR_",regionType,"_",
-                             currentSample,".pdf"),
-             plot=mp, device="pdf", width=29, height=20, units="cm")
+      #combine PDF function
     }
-    allSampleMats[[currentSample]]<-allmats
-    utils::write.csv(matrixLog,paste0(path,"/csv/LogMatrix_",regionType,".csv"))
+    #allSampleMats[[currentSample]]<-allmats
+    utils::write.csv(matrixLog,paste0(path,"/csv/MatrixLog_",regionType,".csv"))
   }
-  return(allSampleMats)
+  return(matrixLog)
 }
 
 
