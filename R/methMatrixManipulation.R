@@ -460,7 +460,8 @@ plotAllMatrices<-function(allSampleMats, samples, regionGRs, featureGRs, regionT
                           includeInFileName="", drawArrow=TRUE) {
   path="."
   # get list of all regions in the object
-  allAmp2plot<-unique(unlist(lapply(allSampleMats,function(x){names(x)})))
+  #allAmp2plot<-unique(unlist(lapply(allSampleMats,function(x){names(x)})))
+  alllAmp2plot<-unique(allSampleMats$region)
   # plot single molecule matrices on their own
   for (i in allAmp2plot) {
     if (withAvr==TRUE) {
@@ -470,8 +471,10 @@ plotAllMatrices<-function(allSampleMats, samples, regionGRs, featureGRs, regionT
     }
     plotList=list()
     print(paste0("plotting", i))
+    #currentRegion<-which(allSampleMats$region==i)
     for (j in seq_along(samples)) {
-      mat<-allSampleMats[[samples[j]]][[i]]
+      #mat<-allSampleMats[[samples[j]]][[i]]
+      mat<-readRDS(allSampleMats[allSampleMats$region==i & allSampleMats$sample==samples[j],])
       maxReads=10000
       if (!is.null(dim(mat))) {
         if (dim(mat)[1]>maxReads) { # if matrix contains more than 10000 reads, do a random subsample
