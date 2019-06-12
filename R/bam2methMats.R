@@ -50,7 +50,7 @@ getReadMatrix<-function(bamFile,genomeFile,bedFile,region) {
   }
   # use samtools mpileup to call C methylation
   tab<-system(paste0("samtools mpileup -f ",genomeFile," -l ",bedFile," -r ",region,
-                "  --output-QNAME --max-depth 100000 --min-BQ 8 ",
+                "  --output-QNAME --max-depth 10000 --min-BQ 8 ",
                 " --ff UNMAP,QCFAIL ",bamFile),intern=T)
   # convert output to data frame
   tab<-lapply(tab,strsplit,"\t")
