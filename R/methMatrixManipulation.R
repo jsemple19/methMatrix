@@ -35,7 +35,7 @@ library(ggpubr)
 
 #' Extract matrices into a simple list
 #'
-#' @param methMats A list of lists: list of samples containing list of methylation matrices
+#' @param methMats A table of filepaths to methylation matrices
 #' (usually named by the genomic region they come from)
 #' @param regionName A vector containing the names of regions of interest (default is all regions)
 #' @param sampleName A vector containing the names of samples of interest (default is all samples)
@@ -58,17 +58,18 @@ getMatrices<-function(methMats,regionName=c(),sampleName=c()) {
   # each matrix will have a name composed of sampleName__regionName
   newMats<-list()
   if(length(sampleName)==0) {
-    sampleName<-names(methMats)
+    sampleName<-unique(methMats$sample)
   }
   if(length(regionName)==0) {
-    regionName<-unique(unlist(lapply(methMats,names)))
+    regionName<-unique(methMats$region)
   }
-  for (s in sampleName) {
-    idx<-regionName %in% names(methMats[[s]])
-    if(sum(idx)>0) {  # deal with the case that none of the genes is in a matrix
-      newNames<-paste0(s,"__",regionName[idx])
-      newMats[newNames]<-methMats[[s]][regionName[idx]]
-    }
+  s<-methMats$sample %in% sampleName
+  r<-methMats$region %in% regionName
+  idx<-r*s
+  for (i in 1:nrow(methMats[idx,])) {
+    mat<-readRDS(methMats$filename[i])
+    newName<-paste0(methMats[idx,"sample"][i], "__", methMats[idx,"region"][i])
+    newMats[newName]<-mat
   }
   return(newMats)
 }
@@ -76,15 +77,25 @@ getMatrices<-function(methMats,regionName=c(),sampleName=c()) {
 
 #' Merge multiple matrices into a single matrix
 #'
-#' @param matList A list of matrices which have the same columns
+#' This function takes a list of matrices with the same number of columns and merges
+# them to a single matrix. row names will now contain sampleName__regionName__readName
+#'
+#' @param matList A table of paths to matrices which have the same columns
 #' @return A single methylation matrix
 #' @export
 rbindMatrixList<-function(matList) {
-  # this function takes a list of matrices with the same number of columns and merges
-  # them to a single matrix. row names will now contain sampleName__regionName__readName
-  stopifnot(length(unique(sapply(matList,ncol)))==1) # stop if number of cols is different in any of the matrices
-  mergedMat<-do.call(rbind,matList)
-  row.names(mergedMat)<-paste0(rep(names(matList),sapply(matList,nrow)),"__",row.names(mergedMat))
+  first<-TRUE
+  for (i in 1:nrow(matList)) {
+    mat<-readRDS(matList$filename[i])
+    row.names(mat)<-paste0(matList$sample[i],"__",matList$region[i],"__",row.names(mat))
+    if (first==TRUE) {
+      mergedMat<-mat
+      first<-FALSE
+    } else {
+      mergedMat<-rbind(mergedMat,mat)
+    }
+  #row.names(mergedMat)<-paste0(rep(names(matList),sapply(matList,nrow)),"__",row.names(mergedMat))
+  }
   return(mergedMat)
 }
 
@@ -135,19 +146,34 @@ changeAnchorCoord<-function(mat,anchorCoord=0) {
   return(mat)
 }
 
-
-getFullMatrices<-function(matList,winSize=500) {
-  newList<-lapply(matList,function(m) {
+#' Get full matrix of all positions in a window even if no C
+#'
+#' In order to compare different promoters, we need to create a padded
+#' matrix with NAs in positions in between Cs.
+#'
+#' @param matList A table of paths to matrices which have the same columns
+#' @param regionType A name for the type of region the matrices desribe
+#' @param winSize The size (in bp) of the window containing the matrices
+#' @return A table of file paths to padded methylation matrices
+#' @export
+getFullMatrices<-function(matList,regionType,winSize=500) {
+  makeDirs(path,paste0("rds/paddedMats_",regionType))
+  matrixLog<-matList[,c("filename","sample","region")]
+  matrixLog$filename<-NA
+  for (i in 1:nrow(matList)) {
+    mat<-readRDS(matList$filename[i])
     # create a matrix with winSize columns and one row per seq read
-    Cpos<-colnames(m)
+    Cpos<-colnames(mat)
     withinRange<- -winSize/2<=as.numeric(Cpos) & winSize/2>=as.numeric(Cpos)
-    fullMat<-matrix(data=NaN,nrow=dim(m)[1],ncol=winSize)
+    fullMat<-matrix(data=NaN,nrow=dim(mat)[1],ncol=winSize)
     colnames(fullMat)<-c(seq(-winSize/2,-1),seq(1,winSize/2))
-    fullMat[,Cpos[withinRange]]<-m[,withinRange]
-    return(fullMat)
-  })
-  names(newList)<-names(matList)
-  return(matList)
+    fullMat[,Cpos[withinRange]]<-mat[,withinRange]
+    matName<-paste0(path,"/rds/paddedMats_",regionType,"/",currentSample,"_",regionGR$ID,".rds")
+    saveRDS(fullMat,file=matName)
+    matrixLog[i,"filename"]<-matName
+  }
+  utils::write.csv(matrixLog,paste0(path,"/csv/MatrixLog_paddedMats_",regionType,".csv"))
+  return(matrixLog)
 }
 
 
@@ -155,7 +181,7 @@ getFullMatrices<-function(matList,winSize=500) {
 
 #' Convert C position numbering from genomic to relative coordinates for a list of matrices
 #'
-#' @param matList A simple list of methylation matrices with names that match the regionGRs object
+#' @param matList A table of paths to methylation matrices with names that match the regionGRs object
 #' @param regionGRs A genomicRanges object of the regions relative to which the new coordinates are caclulated
 #' with a metadata column called "ID" containing names that match the methylation matrices in matList
 #' @param anchorCoord  The coordinate which will be set as the 0 position for relative coordinates
@@ -195,7 +221,7 @@ getRelativeCoordMats<-function(matList, regionGRs, regionType, anchorCoord=0) {
 
 #' Calculate methylation frequency at each position for metagene plots
 #'
-#' @param matList A simple list of methylation matrices with names that match the regionsGRs object
+#' @param matList A table of filepaths of methylation matrices with names that match the regionsGRs object
 #' @param regionGRs A genomicRanges object of the regions for which aggregate methylation frequency
 #' will be calculated. the object must contain a metadata column called "ID" containing names that
 #' match the methylation matrices in matList
@@ -205,16 +231,19 @@ getRelativeCoordMats<-function(matList, regionGRs, regionType, anchorCoord=0) {
 #' is the chromosome on which that region is present.
 #' @export
 getMetaMethFreq<-function(matList,regionGRs,minReads=50) {
-  for (i in seq_along(matList)) {
-    if (dim(matList[[i]])[1]>minReads) {
-      vecSummary<-colMeans(matList[[i]],na.rm=T)
+  first=TRUE
+  for (i in 1:nrow(matList)) {
+    mat<-readRDS(matList$filename[i])
+    if (dim(mat)[1]>minReads) {
+      vecSummary<-colMeans(mat,na.rm=T)
       df<-data.frame("position"=names(vecSummary),"methFreq"=vecSummary)
-      df$ID<-names(matList)[i]
-      df$chr<-as.character(GenomicRanges::seqnames(regionGRs)[match(names(matList)[i],regionGRs$ID)])
-      if (exists("methFreqDF")){
-        methFreqDF<-rbind(methFreqDF,df)
-      } else {
+      df$ID<-matList$region[i]
+      df$chr<-as.character(GenomicRanges::seqnames(regionGRs)[match(matList$region[i],regionGRs$ID)])
+      if (first==TRUE){
         methFreqDF<-df
+        first=FALSE
+      } else {
+        methFreqDF<-rbind(methFreqDF,df)
       }
     }
   }
@@ -565,7 +594,7 @@ convertGRtoRelCoord<-function(grs,winSize,anchorPoint="middle") {
 #'
 #' In order to do a metagene plot from matrices, the average methylation frequency from all
 #' matrices with more reads than minReads is collected into a data frame
-#' @param relCoordMats A list (by sample) of lists (by regions) of methylation matrices which have been converted to relative coordinates
+#' @param relCoordMats A table of paths to methylation matrices which have been converted to relative coordinates
 #' @param samples A list of samples to plot (same as sample names in allSampleMats)
 #' @param regionGRs A genomic regions object with all regions for which matrices should be extracted (same as in allSampleMats). The metadata columns must contain a column called "ID" with a unique ID for each region.
 #' @param minReads The minimal number of reads required in a matrix for average frequency to be calculated.
@@ -574,8 +603,9 @@ convertGRtoRelCoord<-function(grs,winSize,anchorPoint="middle") {
 getAllSampleMetaMethFreq<-function(relCoordMats,samples,regionGRs,minReads=10) {
   first<-TRUE
   for (i in seq_along(samples)) {
-    metaMethFreqDF<-getMetaMethFreq(matList=relCoordMats[[samples[i]]],
-                                    regionGRs=regionGRs,minReads=minReads)
+    idx<-relCoordMats$sample==samples[i]
+    metaMethFreqDF<-getMetaMethFreq(matList=relCoordMats[idx,],
+                                    regionGRs=regionGRs, minReads=minReads)
     print(samples[i])
     metaMethFreqDF$sample<-samples[i]
     if(first==TRUE) {
