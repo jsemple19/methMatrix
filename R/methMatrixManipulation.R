@@ -461,7 +461,7 @@ plotAllMatrices<-function(allSampleMats, samples, regionGRs, featureGRs, regionT
   path="."
   # get list of all regions in the object
   #allAmp2plot<-unique(unlist(lapply(allSampleMats,function(x){names(x)})))
-  alllAmp2plot<-unique(allSampleMats$region)
+  allAmp2plot<-unique(allSampleMats$region)
   # plot single molecule matrices on their own
   for (i in allAmp2plot) {
     if (withAvr==TRUE) {
