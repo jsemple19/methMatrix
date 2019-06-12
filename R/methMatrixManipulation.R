@@ -164,22 +164,32 @@ getFullMatrices<-function(matList,winSize=500) {
 #'  to relativepositions within the genomicRanges regionGRs. regionGRs on the negative strand will be flipped to be
 #'  in the forward orientation.
 #' @export
-getRelativeCoordMats<-function(matList,regionGRs,anchorCoord=0) {
-  newMatList<-lapply(seq_along(matList),function(x){
-    print(x)
-    mat<-matList[[x]]
+getRelativeCoordMats<-function(matList, regionGRs, regionType, anchorCoord=0) {
+  makeDirs(path,paste0("rds/relCoord_",regionType))
+  matrixLog<-matList[,c("filename","sample","region")]
+  matrixLog$filename<-NA
+  matrixLog$reads<-NA
+  matrixLog$motifs<-NA
+  for (i in 1:nrow(matList)) {
+  #newMatList<-lapply(seq_along(matList),function(x){
+    print(matList[i,c("sample","region")])
+    mat<-readRDS(matList$filename[i])
     if(sum(dim(mat)==c(0,0))<1) {
       regionID<-names(matList)[x]
       regionGR<-regionGRs[regionGRs$ID==regionID]
       newMat<-getRelativeCoord(mat,regionGR,invert=ifelse(GenomicRanges::strand(regionGR)=="+",F,T))
       newMat<-changeAnchorCoord(mat=newMat,anchorCoord=anchorCoord)
-      newMat
     } else {
       newMat<-mat
     }
-  })
-  names(newMatList)<-names(matList)
-  return(newMatList)
+    matName<-paste0(path,"/rds/relCoord_",regionType,"/",currentSample,"_",regionGR$ID,".rds")
+    saveRDS(newMat,file=matName)
+    matrixLog[i,"filename"]<-matName
+    matrixLog[i,"reads"]<-dim(newMat)[1]
+    matrixLog[i,"motifs"]<-dim(newMat)[2]
+  }
+  utils::write.csv(matrixLog,paste0(path,"/csv/MatrixLog_relCoord_",regionType,".csv"))
+  return(matrixLog)
 }
 
 

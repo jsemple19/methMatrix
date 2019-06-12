@@ -498,7 +498,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
   bedFileGC=paste0(bedFilePrefix,".GC.bed")
 
   # make output directories
-  makeDirs(path,c("csv", "rds/methMats"))
+  makeDirs(path,c("csv", paste0("rds/methMats_",regionType)))
   if (convRatePlots==TRUE) {
     makeDirs(path,c("plots/informativeCsPlots",
                     "plots/conversionRatePlots"))
@@ -566,17 +566,16 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
       # count reads that do not cover at least 1-maxNAfraction of the cytosines
       matrixLog[j,"fewNAreads"]<-sum(rowMeans(is.na(methMat))<maxNAfraction)
       print(i)
-      matName<-paste0(path,"/rds/methMats/",regionType,"_",currentSample,"_",regionGR$ID,".rds")
+      matName<-paste0(path,"/rds/methMats_",regionType,"/",currentSample,"_",regionGR$ID,".rds")
       saveRDS(methMat,file=matName)
       matrixLog[j,"filename"]<-matName
-      #allmats[[regionGR$ID]]<-methMat
+
     }
     if (convRatePlots==TRUE) {
       #combine PDF function
     }
-    #allSampleMats[[currentSample]]<-allmats
-    utils::write.csv(matrixLog,paste0(path,"/csv/MatrixLog_",regionType,".csv"))
   }
+  utils::write.csv(matrixLog,paste0(path,"/csv/MatrixLog_",regionType,".csv"))
   return(matrixLog)
 }
 
