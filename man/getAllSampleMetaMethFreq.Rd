@@ -7,7 +7,7 @@
 getAllSampleMetaMethFreq(relCoordMats, samples, regionGRs, minReads = 10)
 }
 \arguments{
-\item{relCoordMats}{A list (by sample) of lists (by regions) of methylation matrices which have been converted to relative coordinates}
+\item{relCoordMats}{A table of paths to methylation matrices which have been converted to relative coordinates}
 
 \item{samples}{A list of samples to plot (same as sample names in allSampleMats)}
 

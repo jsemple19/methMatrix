@@ -7,7 +7,7 @@
 getMetaMethFreq(matList, regionGRs, minReads = 50)
 }
 \arguments{
-\item{matList}{A simple list of methylation matrices with names that match the regionsGRs object}
+\item{matList}{A table of filepaths of methylation matrices with names that match the regionsGRs object}
 
 \item{regionGRs}{A genomicRanges object of the regions for which aggregate methylation frequency
 will be calculated. the object must contain a metadata column called "ID" containing names that

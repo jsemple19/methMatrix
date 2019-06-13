@@ -7,11 +7,11 @@
 rbindMatrixList(matList)
 }
 \arguments{
-\item{matList}{A list of matrices which have the same columns}
+\item{matList}{A table of paths to matrices which have the same columns}
 }
 \value{
 A single methylation matrix
 }
 \description{
-Merge multiple matrices into a single matrix
+This function takes a list of matrices with the same number of columns and merges
 }
