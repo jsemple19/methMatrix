@@ -513,7 +513,7 @@ plotAllMatrices<-function(allSampleMats, samples, regionGRs, featureGRs, regionT
     #currentRegion<-which(allSampleMats$region==i)
     for (j in seq_along(samples)) {
       #mat<-allSampleMats[[samples[j]]][[i]]
-      mat<-readRDS(allSampleMats[allSampleMats$region==i & allSampleMats$sample==samples[j],])
+      mat<-readRDS(allSampleMats[allSampleMats$region==i & allSampleMats$sample==samples[j],"filename"])
       maxReads=10000
       if (!is.null(dim(mat))) {
         if (dim(mat)[1]>maxReads) { # if matrix contains more than 10000 reads, do a random subsample
