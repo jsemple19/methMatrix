@@ -201,7 +201,7 @@ getRelativeCoordMats<-function(matList, regionGRs, regionType, anchorCoord=0) {
     print(matList[i,c("sample","region")])
     mat<-readRDS(matList$filename[i])
     if(sum(dim(mat)==c(0,0))<1) {
-      regionID<-names(matList)[x]
+      regionID<-matList$region
       regionGR<-regionGRs[regionGRs$ID==regionID]
       newMat<-getRelativeCoord(mat,regionGR,invert=ifelse(GenomicRanges::strand(regionGR)=="+",F,T))
       newMat<-changeAnchorCoord(mat=newMat,anchorCoord=anchorCoord)
