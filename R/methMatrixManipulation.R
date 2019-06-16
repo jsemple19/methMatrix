@@ -197,10 +197,13 @@ getRelativeCoordMats<-function(matList, regionGRs, regionType, anchorCoord=0) {
   matrixLog$reads<-NA
   matrixLog$motifs<-NA
   for (i in 1:nrow(matList)) {
-  #newMatList<-lapply(seq_along(matList),function(x){
     print(matList[i,c("sample","region")])
-    mat<-readRDS(matList$filename[i])
-    if(sum(dim(mat)==c(0,0))<1) {
+    if (is.na(matList$filename[i])) {
+      mat<-NULL
+    } else {
+      mat<-readRDS(matList$filename[i])
+    }
+    if(sum(dim(mat)==c(0,0))<1 | ! is.null(dim(mat))) {
       regionID<-matList$region[i]
       regionGR<-regionGRs[regionGRs$ID==regionID]
       newMat<-getRelativeCoord(mat,regionGR,invert=ifelse(GenomicRanges::strand(regionGR)=="+",F,T))
