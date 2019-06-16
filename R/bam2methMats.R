@@ -575,7 +575,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
       #combine PDF function
     }
   }
-  utils::write.csv(matrixLog,paste0(path,"/csv/MatrixLog_",regionType,".csv"))
+  utils::write.csv(matrixLog,paste0(path,"/csv/MatrixLog_",regionType,".csv"), quote=F, row.names=F)
   return(matrixLog)
 }
 

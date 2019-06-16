@@ -172,7 +172,7 @@ getFullMatrices<-function(matList,regionType,winSize=500) {
     saveRDS(fullMat,file=matName)
     matrixLog[i,"filename"]<-matName
   }
-  utils::write.csv(matrixLog,paste0(path,"/csv/MatrixLog_paddedMats_",regionType,".csv"))
+  utils::write.csv(matrixLog,paste0(path,"/csv/MatrixLog_paddedMats_",regionType,".csv"), quote=F, row.names=F)
   return(matrixLog)
 }
 
@@ -201,7 +201,7 @@ getRelativeCoordMats<-function(matList, regionGRs, regionType, anchorCoord=0) {
     print(matList[i,c("sample","region")])
     mat<-readRDS(matList$filename[i])
     if(sum(dim(mat)==c(0,0))<1) {
-      regionID<-matList$region
+      regionID<-matList$region[i]
       regionGR<-regionGRs[regionGRs$ID==regionID]
       newMat<-getRelativeCoord(mat,regionGR,invert=ifelse(GenomicRanges::strand(regionGR)=="+",F,T))
       newMat<-changeAnchorCoord(mat=newMat,anchorCoord=anchorCoord)
@@ -214,7 +214,7 @@ getRelativeCoordMats<-function(matList, regionGRs, regionType, anchorCoord=0) {
     matrixLog[i,"reads"]<-dim(newMat)[1]
     matrixLog[i,"motifs"]<-dim(newMat)[2]
   }
-  utils::write.csv(matrixLog,paste0(path,"/csv/MatrixLog_relCoord_",regionType,".csv"))
+  utils::write.csv(matrixLog,paste0(path,"/csv/MatrixLog_relCoord_",regionType,".csv"), quote=F, row.names=F)
   return(matrixLog)
 }
 
