@@ -208,7 +208,7 @@ getRelativeCoordMats<-function(matList, regionGRs, regionType, anchorCoord=0) {
     } else {
       newMat<-mat
     }
-    matName<-paste0(path,"/rds/relCoord_",regionType,"/",currentSample,"_",regionGR$ID,".rds")
+    matName<-paste0(path,"/rds/relCoord_",regionType,"/",matList$sample[i],"_",regionGR$ID,".rds")
     saveRDS(newMat,file=matName)
     matrixLog[i,"filename"]<-matName
     matrixLog[i,"reads"]<-dim(newMat)[1]
