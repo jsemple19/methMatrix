@@ -291,7 +291,7 @@ combineCGandGCmatrices<-function(matCG,matGC,regionGR,genomeMotifGR){
     # remove reads with aboslutly no methylation info
     convMat<-convMat[rowSums(is.na(convMat))!=dim(convMat)[2],]
   } else {
-    convMat<-MULL
+    convMat<-NULL
   }
   return(convMat)
 }
@@ -494,8 +494,6 @@ makeDirs<-function(path,dirNameList=c()) {
 getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionType, genomeMotifGR,
                                     minConversionRate=0.8,maxNAfraction=0.2, bedFilePrefix=NULL,
                                     path=".", convRatePlots=FALSE) {
-  #allmats=list()
-  #allSampleMats=list()
   #create pathnames to bedfiles
   if (is.null(bedFilePrefix)){
     bedFilePrefix=gsub("\\.fa","", genomeFile)
