@@ -533,9 +533,10 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
       regionGR<-regionGRs[i]
       matCG<-getReadMatrix(bamFile,genomeFile,bedFileCG,regionGR)
       matGC<-getReadMatrix(bamFile,genomeFile,bedFileGC,regionGR)
-      # combine CG and GC matrices and change conversion=1 to methylation=1
-      methMat<-1-combineCGandGCmatrices(matCG,matGC,regionGR,genomeMotifGR)
-      if(! is.null(dim(methMat))) {
+      convMat<-combineCGandGCmatrices(matCG,matGC,regionGR,genomeMotifGR)
+      if(! is.null(dim(convMat))) {
+        # combine CG and GC matrices and change conversion=1 to methylation=1
+        methMat<-1-convMat
         j<-which(matrixLog$sample==currentSample & matrixLog$region==regionGR$ID)
         # record number of reads in the matrices
         matrixLog[j,"numCGpos"]<-dim(matCG)[2]
