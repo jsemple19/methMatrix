@@ -505,7 +505,7 @@ plotAllMatrices<-function(allSampleMats, samples, regionGRs, featureGRs, regionT
                           featureLabel="TSS", maxNAfraction=0.2,withAvr=FALSE,
                           includeInFileName="", drawArrow=TRUE) {
   path="."
-  naRows<-is.na(allSampleMat$filename)
+  naRows<-is.na(allSampleMats$filename)
   allSampleMats<-allSampleMats[!naRows,]
   # get list of all regions in the object
   #allAmp2plot<-unique(unlist(lapply(allSampleMats,function(x){names(x)})))
