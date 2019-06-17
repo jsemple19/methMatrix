@@ -519,9 +519,10 @@ plotAllMatrices<-function(allSampleMats, samples, regionGRs, featureGRs, regionT
     }
     plotList=list()
     print(paste0("plotting ", i))
-    for (j in seq_along(samples)) {
-      print(allSampleMats[allSampleMats$region==i & allSampleMats$sample==samples[j],"filename"])
-      mat<-readRDS(allSampleMats[allSampleMats$region==i & allSampleMats$sample==samples[j],"filename"])
+    currentRegion<-allSampleMats[allSampleMats$region==i,]
+    for (j in seq_along(currentRegion$sample)) {
+      mat<-readRDS(allSampleMats[allSampleMats$region==i &
+                                   allSampleMats$sample==currentRegion$sample[j],"filename"])
       maxReads=10000
       if (!is.null(dim(mat))) {
         if (dim(mat)[1]>maxReads) { # if matrix contains more than 10000 reads, do a random subsample
@@ -533,16 +534,16 @@ plotAllMatrices<-function(allSampleMats, samples, regionGRs, featureGRs, regionT
           p<-plotSingleMoleculesWithAvr(mat=mat, regionName=i, regionGRs=regionGRs,
                                         featureGRs=featureGRs, myXlab="CpG/GpC position",
                                         featureLabel=featureLabel, drawArrow=drawArrow,
-                                        title=samples[j], baseFontSize=11,
+                                        title=currentRegion$sample[j], baseFontSize=11,
                                         maxNAfraction=maxNAfraction)
         } else {
           p<-plotSingleMolecules(mat=mat, regionName=i, regionGRs=regionGRs,
                                  featureGRs=featureGRs, myXlab="CpG/GpC position",
                                  featureLabel=featureLabel, drawArrow=drawArrow,
-                                 title=samples[j], baseFontSize=12,
+                                 title=currentRegion$sample[j], baseFontSize=12,
                                  maxNAfraction=maxNAfraction)
         }
-        plotList[[samples[j]]]<-p
+        plotList[[currentRegion$sample[j]]]<-p
       }
     }
     regionGR<-regionGRs[match(i,regionGRs$ID)]
