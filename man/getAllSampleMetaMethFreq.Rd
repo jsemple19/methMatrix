@@ -9,9 +9,9 @@ getAllSampleMetaMethFreq(relCoordMats, samples, regionGRs, minReads = 10)
 \arguments{
 \item{relCoordMats}{A table of paths to methylation matrices which have been converted to relative coordinates}
 
-\item{samples}{A list of samples to plot (same as sample names in allSampleMats)}
+\item{samples}{A list of samples to plot (same as sample names in relCoordMats)}
 
-\item{regionGRs}{A genomic regions object with all regions for which matrices should be extracted (same as in allSampleMats). The metadata columns must contain a column called "ID" with a unique ID for each region.}
+\item{regionGRs}{A genomic regions object with all regions for which matrices should be extracted (same as in relCoordMats). The metadata columns must contain a column called "ID" with a unique ID for each region.}
 
 \item{minReads}{The minimal number of reads required in a matrix for average frequency to be calculated.}
 }

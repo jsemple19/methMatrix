@@ -84,6 +84,8 @@ getMatrices<-function(methMats,regionName=c(),sampleName=c()) {
 #' @return A single methylation matrix
 #' @export
 rbindMatrixList<-function(matList) {
+  naRows<-is.na(matList$filename)
+  matList<-matList[!naRows,]
   first<-TRUE
   for (i in 1:nrow(matList)) {
     mat<-readRDS(matList$filename[i])
@@ -157,6 +159,8 @@ changeAnchorCoord<-function(mat,anchorCoord=0) {
 #' @return A table of file paths to padded methylation matrices
 #' @export
 getFullMatrices<-function(matList,regionType,winSize=500) {
+  naRows<-is.na(matList$filename)
+  matList<-matList[!naRows,]
   makeDirs(path,paste0("rds/paddedMats_",regionType))
   matrixLog<-matList[,c("filename","sample","region")]
   matrixLog$filename<-NA
@@ -191,6 +195,8 @@ getFullMatrices<-function(matList,regionType,winSize=500) {
 #'  in the forward orientation.
 #' @export
 getRelativeCoordMats<-function(matList, regionGRs, regionType, anchorCoord=0) {
+  naRows<-is.na(matList$filename)
+  matList<-matList[!naRows,]
   makeDirs(path,paste0("rds/relCoord_",regionType))
   matrixLog<-matList[,c("filename","sample","region")]
   matrixLog$filename<-NA
@@ -198,16 +204,12 @@ getRelativeCoordMats<-function(matList, regionGRs, regionType, anchorCoord=0) {
   matrixLog$motifs<-NA
   for (i in 1:nrow(matList)) {
     print(matList[i,c("sample","region")])
-    if (is.na(matList$filename[i])) {
-      mat<-NULL
-    } else {
-      mat<-readRDS(matList$filename[i])
-    }
-    if(sum(dim(mat)==c(0,0))<1 | ! is.null(dim(mat))) {
-      regionID<-matList$region[i]
-      regionGR<-regionGRs[regionGRs$ID==regionID]
-      newMat<-getRelativeCoord(mat,regionGR,invert=ifelse(GenomicRanges::strand(regionGR)=="+",F,T))
-      newMat<-changeAnchorCoord(mat=newMat,anchorCoord=anchorCoord)
+    mat<-readRDS(matList$filename[i])
+    if(sum(dim(mat)==c(0,0))<1) {
+       regionID<-matList$region[i]
+       regionGR<-regionGRs[regionGRs$ID==regionID]
+       newMat<-getRelativeCoord(mat,regionGR,invert=ifelse(GenomicRanges::strand(regionGR)=="+",F,T))
+       newMat<-changeAnchorCoord(mat=newMat,anchorCoord=anchorCoord)
     } else {
       newMat<-mat
     }
@@ -234,6 +236,8 @@ getRelativeCoordMats<-function(matList, regionGRs, regionType, anchorCoord=0) {
 #' is the chromosome on which that region is present.
 #' @export
 getMetaMethFreq<-function(matList,regionGRs,minReads=50) {
+  naRows<-is.na(matList$filename)
+  matList<-matList[!naRows,]
   first=TRUE
   for (i in 1:nrow(matList)) {
     mat<-readRDS(matList$filename[i])
@@ -501,6 +505,8 @@ plotAllMatrices<-function(allSampleMats, samples, regionGRs, featureGRs, regionT
                           featureLabel="TSS", maxNAfraction=0.2,withAvr=FALSE,
                           includeInFileName="", drawArrow=TRUE) {
   path="."
+  naRows<-is.na(allSampleMat$filename)
+  allSampleMats<-allSampleMats[!naRows,]
   # get list of all regions in the object
   #allAmp2plot<-unique(unlist(lapply(allSampleMats,function(x){names(x)})))
   allAmp2plot<-unique(allSampleMats$region)
@@ -598,12 +604,14 @@ convertGRtoRelCoord<-function(grs,winSize,anchorPoint="middle") {
 #' In order to do a metagene plot from matrices, the average methylation frequency from all
 #' matrices with more reads than minReads is collected into a data frame
 #' @param relCoordMats A table of paths to methylation matrices which have been converted to relative coordinates
-#' @param samples A list of samples to plot (same as sample names in allSampleMats)
-#' @param regionGRs A genomic regions object with all regions for which matrices should be extracted (same as in allSampleMats). The metadata columns must contain a column called "ID" with a unique ID for each region.
+#' @param samples A list of samples to plot (same as sample names in relCoordMats)
+#' @param regionGRs A genomic regions object with all regions for which matrices should be extracted (same as in relCoordMats). The metadata columns must contain a column called "ID" with a unique ID for each region.
 #' @param minReads The minimal number of reads required in a matrix for average frequency to be calculated.
 #' @return Data frame with average methylation at relative coordinates extracted from all matrices for all samples
 #' @export
 getAllSampleMetaMethFreq<-function(relCoordMats,samples,regionGRs,minReads=10) {
+  naRows<-is.na(relCoordMats$filename)
+  relCoordMats<-relCoordMats[!naRows,]
   first<-TRUE
   for (i in seq_along(samples)) {
     idx<-relCoordMats$sample==samples[i]
