@@ -510,7 +510,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
                         region=rep(regionGRs$ID,length(samples)),
                         numCGpos=NA, numGCpos=NA, numUniquePos=NA,
                         CGreads=NA, GCreads=NA, methMatReads=NA,
-                        goodConvReads=NA, fewNAreads=NA)
+                        goodConvReads=NA, fewNAreads=NA,stringsAsFactors=F)
 
   for (currentSample in samples) {
     print(currentSample)

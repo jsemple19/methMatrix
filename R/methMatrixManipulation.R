@@ -243,7 +243,7 @@ getMetaMethFreq<-function(matList,regionGRs,minReads=50) {
     mat<-readRDS(matList$filename[i])
     if (dim(mat)[1]>minReads) {
       vecSummary<-colMeans(mat,na.rm=T)
-      df<-data.frame("position"=names(vecSummary),"methFreq"=vecSummary)
+      df<-data.frame("position"=names(vecSummary),"methFreq"=vecSummary,stringsAsFactors=F)
       df$ID<-matList$region[i]
       df$chr<-as.character(GenomicRanges::seqnames(regionGRs)[match(matList$region[i],regionGRs$ID)])
       if (first==TRUE){
@@ -505,10 +505,13 @@ plotAllMatrices<-function(allSampleMats, samples, regionGRs, featureGRs, regionT
                           featureLabel="TSS", maxNAfraction=0.2,withAvr=FALSE,
                           includeInFileName="", drawArrow=TRUE) {
   path="."
+  # convert any factor variables to character
+  f <- sapply(allSampleMats, is.factor)
+  allSampleMats[f] <- lapply(allSampleMats[f], as.character)
+  # remove any regions with no matrix
   naRows<-is.na(allSampleMats$filename)
   allSampleMats<-allSampleMats[!naRows,]
   # get list of all regions in the object
-  #allAmp2plot<-unique(unlist(lapply(allSampleMats,function(x){names(x)})))
   allAmp2plot<-unique(allSampleMats$region)
   # plot single molecule matrices on their own
   for (i in allAmp2plot) {
@@ -543,27 +546,31 @@ plotAllMatrices<-function(allSampleMats, samples, regionGRs, featureGRs, regionT
                                  title=currentRegion$sample[j], baseFontSize=12,
                                  maxNAfraction=maxNAfraction)
         }
-        plotList[[currentRegion$sample[j]]]<-p
+        if (!is.null(p)) {
+          plotList[[currentRegion$sample[j]]]<-p
+        }
       }
     }
-    regionGR<-regionGRs[match(i,regionGRs$ID)]
-    featGR<-featureGRs[match(i,featureGRs$ID)]
-    chr<-GenomicRanges::seqnames(regionGR)
-    strandInfo<-ifelse(GenomicRanges::strand(featGR)!=GenomicRanges::strand(regionGR),
-                       paste0("reg: ",GenomicRanges::strand(regionGR),"ve, ",
-                              featureLabel,": ",GenomicRanges::strand(featGR),"ve strand"),
-                       paste0(GenomicRanges::strand(regionGR),"ve strand"))
-    title<-paste0(i, ": ",chr," ",strandInfo)
-    spacer<-ifelse(length(includeInFileName)>0,"_","")
-    mp<-gridExtra::marrangeGrob(grobs=plotList,nrow=2,ncol=2,top=title)
-    if (withAvr==TRUE) {
-      ggplot2::ggsave(paste0(path,"/plots/singleMoleculePlotsAvr_",regionType,"/",chr,"_",i,
-                    spacer,includeInFileName,".png"),
-             plot=mp, device="png", width=20, height=29, units="cm")
-    } else {
-      ggplot2::ggsave(paste0(path,"/plots/singleMoleculePlots_",regionType,"/",chr,"_",i,
-                    spacer, includeInFileName,".png"),
-             plot=mp, device="png", width=29, height=20, units="cm")
+    if (length(plotList)>0) {
+      regionGR<-regionGRs[match(i,regionGRs$ID)]
+      featGR<-featureGRs[match(i,featureGRs$ID)]
+      chr<-GenomicRanges::seqnames(regionGR)
+      strandInfo<-ifelse(GenomicRanges::strand(featGR)!=GenomicRanges::strand(regionGR),
+                         paste0("reg: ",GenomicRanges::strand(regionGR),"ve, ",
+                                featureLabel,": ",GenomicRanges::strand(featGR),"ve strand"),
+                         paste0(GenomicRanges::strand(regionGR),"ve strand"))
+      title<-paste0(i, ": ",chr," ",strandInfo)
+      spacer<-ifelse(length(includeInFileName)>0,"_","")
+      mp<-gridExtra::marrangeGrob(grobs=plotList,nrow=2,ncol=2,top=title)
+      if (withAvr==TRUE) {
+        ggplot2::ggsave(paste0(path,"/plots/singleMoleculePlotsAvr_",regionType,"/",chr,"_",i,
+                               spacer,includeInFileName,".png"),
+                        plot=mp, device="png", width=20, height=29, units="cm")
+      } else {
+        ggplot2::ggsave(paste0(path,"/plots/singleMoleculePlots_",regionType,"/",chr,"_",i,
+                               spacer, includeInFileName,".png"),
+                        plot=mp, device="png", width=29, height=20, units="cm")
+      }
     }
   }
 }
