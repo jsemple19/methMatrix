@@ -52,23 +52,27 @@ getReadMatrix<-function(bamFile,genomeFile,bedFile,region) {
   tab<-system(paste0("samtools mpileup -f ",genomeFile," -l ",bedFile," -r ",region,
                 "  --output-QNAME --max-depth 10000 --min-BQ 8 ",
                 " --ff UNMAP,QCFAIL ",bamFile),intern=T)
-  # convert output to data frame
-  tab<-lapply(tab,strsplit,"\t")
-  tab<-lapply(1:length(tab),function(x){t(tab[[x]][[1]])})
-  tab<-as.data.frame(do.call(rbind,tab),stringsAsFactors=F)
-  colnames(tab)<-c("chr","start","ref","count","matches","BQ","reads")
-  # make empty matrix of reads x C positions
-  allReads<-unique(sort(unlist(sapply(tab$reads,strsplit,split=","),use.names=FALSE)))
-  allPos<-tab$start
-  mat<-matrix(data=NA,nrow=length(allReads),ncol=length(allPos))
-  colnames(mat)<-allPos
-  rownames(mat)<-allReads
-  # scroll through tab to extract methylation values in strand aware way
-  for (line in 1:nrow(tab)) {
-    df<-pileupToConversionStatus(tab[line,])
-    m1<-mat[df$reads,df$pos]
-    m2<-df$Cconv
-    mat[df$reads,df$pos]<-ifelse(is.na(m1), ifelse(is.na(m2), NA, m2), ifelse(is.na(m2), m1, (m1 + m2)))
+  if (length(tab)>0) {
+    # convert output to data frame
+    tab<-lapply(tab,strsplit,"\t")
+    tab<-lapply(1:length(tab),function(x){t(tab[[x]][[1]])})
+    tab<-as.data.frame(do.call(rbind,tab),stringsAsFactors=F)
+    colnames(tab)<-c("chr","start","ref","count","matches","BQ","reads")
+    # make empty matrix of reads x C positions
+    allReads<-unique(sort(unlist(sapply(tab$reads,strsplit,split=","),use.names=FALSE)))
+    allPos<-tab$start
+    mat<-matrix(data=NA,nrow=length(allReads),ncol=length(allPos))
+    colnames(mat)<-allPos
+    rownames(mat)<-allReads
+    # scroll through tab to extract methylation values in strand aware way
+    for (line in 1:nrow(tab)) {
+      df<-pileupToConversionStatus(tab[line,])
+      m1<-mat[df$reads,df$pos]
+      m2<-df$Cconv
+      mat[df$reads,df$pos]<-ifelse(is.na(m1), ifelse(is.na(m2), NA, m2), ifelse(is.na(m2), m1, (m1 + m2)))
+    }
+  } else {
+    mat<-NULL
   }
   return(mat)
 }
@@ -231,60 +235,64 @@ allNAs<-function(vec) {
 #' @return Merged methylation matrix
 #' @export
 combineCGandGCmatrices<-function(matCG,matGC,regionGR,genomeMotifGR){
-  # convert matCG and matGC to genomic ranges with transposed matrix (positions x reads)
-  matCGgr<-matToGR(matCG,regionGR)
-  matGCgr<-matToGR(matGC,regionGR)
+  if (!is.null(matCG) & !is.null(matGC)) {
+    # convert matCG and matGC to genomic ranges with transposed matrix (positions x reads)
+    matCGgr<-matToGR(matCG,regionGR)
+    matGCgr<-matToGR(matGC,regionGR)
 
-  #subset genomeMotifGR by regionGR to get motifs that should be present in the matrices
-  regGCCG<-IRanges::subsetByOverlaps(genomeMotifGR,regionGR)
+    #subset genomeMotifGR by regionGR to get motifs that should be present in the matrices
+    regGCCG<-IRanges::subsetByOverlaps(genomeMotifGR,regionGR)
 
-  # get vector of read names for each gr
-  CGreads<-colnames(GenomicRanges::mcols(matCGgr))
-  GCreads<-colnames(GenomicRanges::mcols(matGCgr))
+    # get vector of read names for each gr
+    CGreads<-colnames(GenomicRanges::mcols(matCGgr))
+    GCreads<-colnames(GenomicRanges::mcols(matGCgr))
 
-  # use genomeMotifGR subset to "destrand" CG and GC calls by summing positions within motifs
-  cg<-grangesutils::applyGRonGR(regGCCG,matCGgr,CGreads,sum,na.rm=T)
-  gc<-grangesutils::applyGRonGR(regGCCG,matGCgr,GCreads,sum,na.rm=T)
+    # use genomeMotifGR subset to "destrand" CG and GC calls by summing positions within motifs
+    cg<-grangesutils::applyGRonGR(regGCCG,matCGgr,CGreads,sum,na.rm=T)
+    gc<-grangesutils::applyGRonGR(regGCCG,matGCgr,GCreads,sum,na.rm=T)
 
-  # ensure no value in the matrix exceeds 1
-  maxval1<-function(m1){
-    ifelse(is.na(m1), NA, ifelse(m1>1, 1, m1))
-  }
-  GenomicRanges::mcols(cg)[,2:dim(GenomicRanges::mcols(cg))[2]]<-data.table::as.data.table(maxval1(as.matrix(GenomicRanges::mcols(cg)[,2:dim(GenomicRanges::mcols(cg))[2]])))
-  GenomicRanges::mcols(gc)[,2:dim(GenomicRanges::mcols(gc))[2]]<-data.table::as.data.table(maxval1(as.matrix(GenomicRanges::mcols(gc)[,2:dim(GenomicRanges::mcols(gc))[2]])))
+    # ensure no value in the matrix exceeds 1
+    maxval1<-function(m1){
+      ifelse(is.na(m1), NA, ifelse(m1>1, 1, m1))
+    }
+    GenomicRanges::mcols(cg)[,2:dim(GenomicRanges::mcols(cg))[2]]<-data.table::as.data.table(maxval1(as.matrix(GenomicRanges::mcols(cg)[,2:dim(GenomicRanges::mcols(cg))[2]])))
+    GenomicRanges::mcols(gc)[,2:dim(GenomicRanges::mcols(gc))[2]]<-data.table::as.data.table(maxval1(as.matrix(GenomicRanges::mcols(gc)[,2:dim(GenomicRanges::mcols(gc))[2]])))
 
-  # find gr that overlap between cg and gc calls
-  ol<-IRanges::findOverlaps(cg,gc)
+    # find gr that overlap between cg and gc calls
+    ol<-IRanges::findOverlaps(cg,gc)
 
-  if (length(ol)>=1) {
-    # find reads that are in both grs (GCGorCGC motifs)
-    idxCGinGC<-CGreads %in% GCreads
-    idxGCinCG<-GCreads %in% CGreads
-    # average values from both matrices at these overlapping sites (NAs are ignored, but
-    # kept if no real values is found)
-    m1<-as.matrix(GenomicRanges::mcols(cg)[S4Vectors::queryHits(ol),CGreads[idxCGinGC]])
-    m2<-as.matrix(GenomicRanges::mcols(gc)[S4Vectors::subjectHits(ol),GCreads[idxGCinCG]])
-    mAvr<-ifelse(is.na(m1), ifelse(is.na(m2), NA, m2), ifelse(is.na(m2), m1, (m1 + m2)/2))
-    GenomicRanges::mcols(cg)[S4Vectors::queryHits(ol),CGreads[idxCGinGC]]<-tibble::as_tibble(mAvr)
-    # make nonoverlapping combined list
-    allGR<-c(cg,gc[-S4Vectors::subjectHits(ol)])
+    if (length(ol)>=1) {
+      # find reads that are in both grs (GCGorCGC motifs)
+      idxCGinGC<-CGreads %in% GCreads
+      idxGCinCG<-GCreads %in% CGreads
+      # average values from both matrices at these overlapping sites (NAs are ignored, but
+      # kept if no real values is found)
+      m1<-as.matrix(GenomicRanges::mcols(cg)[S4Vectors::queryHits(ol),CGreads[idxCGinGC]])
+      m2<-as.matrix(GenomicRanges::mcols(gc)[S4Vectors::subjectHits(ol),GCreads[idxGCinCG]])
+      mAvr<-ifelse(is.na(m1), ifelse(is.na(m2), NA, m2), ifelse(is.na(m2), m1, (m1 + m2)/2))
+      GenomicRanges::mcols(cg)[S4Vectors::queryHits(ol),CGreads[idxCGinGC]]<-tibble::as_tibble(mAvr)
+      # make nonoverlapping combined list
+      allGR<-c(cg,gc[-S4Vectors::subjectHits(ol)])
+    } else {
+      allGR<-c(cg,gc)
+    }
+
+    # shrink gr to single bp
+    CG1bp<-GenomicRanges::resize(allGR[allGR$context=="HCG"],width=1,fix="start")
+    GC1bp<-GenomicRanges::resize(allGR[allGR$context=="GCH"],width=1,fix="end")
+    GCGorCGC1bp<-GenomicRanges::resize(allGR[allGR$context=="GCGorCGC"],width=1,fix="center")
+    # combine and sort
+    allGR<-GenomicRanges::sort(c(CG1bp,GC1bp,GCGorCGC1bp))
+
+    # convert back to matrix
+    readNum<-dim(GenomicRanges::mcols(allGR))[2]-1 # don't include the "context" column
+    convMat<-t(as.matrix(GenomicRanges::mcols(allGR)[,2:(readNum+1)]))
+    colnames(convMat)<-GenomicRanges::start(allGR)
+    # remove reads with aboslutly no methylation info
+    convMat<-convMat[rowSums(is.na(convMat))!=dim(convMat)[2],]
   } else {
-    allGR<-c(cg,gc)
+    convMat<-MULL
   }
-
-  # shrink gr to single bp
-  CG1bp<-GenomicRanges::resize(allGR[allGR$context=="HCG"],width=1,fix="start")
-  GC1bp<-GenomicRanges::resize(allGR[allGR$context=="GCH"],width=1,fix="end")
-  GCGorCGC1bp<-GenomicRanges::resize(allGR[allGR$context=="GCGorCGC"],width=1,fix="center")
-  # combine and sort
-  allGR<-GenomicRanges::sort(c(CG1bp,GC1bp,GCGorCGC1bp))
-
-  # convert back to matrix
-  readNum<-dim(GenomicRanges::mcols(allGR))[2]-1 # don't include the "context" column
-  convMat<-t(as.matrix(GenomicRanges::mcols(allGR)[,2:(readNum+1)]))
-  colnames(convMat)<-GenomicRanges::start(allGR)
-  # remove reads with aboslutly no methylation info
-  convMat<-convMat[rowSums(is.na(convMat))!=dim(convMat)[2],]
   return(convMat)
 }
 
@@ -529,7 +537,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
       methMat<-1-combineCGandGCmatrices(matCG,matGC,regionGR,genomeMotifGR)
       if(! is.null(dim(methMat))) {
         j<-which(matrixLog$sample==currentSample & matrixLog$region==regionGR$ID)
-      # record number of reads in the matrices
+        # record number of reads in the matrices
         matrixLog[j,"numCGpos"]<-dim(matCG)[2]
         matrixLog[j,"numGCpos"]<-dim(matGC)[2]
         matrixLog[j,"numUniquePos"]<-dim(methMat)[2]
