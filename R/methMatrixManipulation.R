@@ -518,10 +518,9 @@ plotAllMatrices<-function(allSampleMats, samples, regionGRs, featureGRs, regionT
       makeDirs(path,paste0("plots/singleMoleculePlots_",regionType))
     }
     plotList=list()
-    print(paste0("plotting", i))
-    #currentRegion<-which(allSampleMats$region==i)
+    print(paste0("plotting ", i))
     for (j in seq_along(samples)) {
-      #mat<-allSampleMats[[samples[j]]][[i]]
+      print(allSampleMats[allSampleMats$region==i & allSampleMats$sample==samples[j],"filename"])
       mat<-readRDS(allSampleMats[allSampleMats$region==i & allSampleMats$sample==samples[j],"filename"])
       maxReads=10000
       if (!is.null(dim(mat))) {
