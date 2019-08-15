@@ -172,6 +172,7 @@ parseMatchString<-function(match) {
 #' @param mat Methylation matrix with reads x Cposition
 #' @param gr GRanges object for which the methylation matrix was made
 #' @return genomic ranges of Cpositions  with mcols containing the reads as columns
+#' @export
 matToGR<-function(mat,gr) {
   matgr<-GenomicRanges::GRanges(seqnames=GenomeInfoDb::seqnames(gr),
                          IRanges::IRanges(start=as.integer(colnames(mat)),width=1),
@@ -241,7 +242,7 @@ combineCGandGCmatrices<-function(matCG,matGC,regionGR,genomeMotifGR){
     matGCgr<-matToGR(matGC,regionGR)
 
     #subset genomeMotifGR by regionGR to get motifs that should be present in the matrices
-    regGCCG<-IRanges::subsetByOverlaps(genomeMotifGR,regionGR)
+    regGCCG<-IRanges::subsetByOverlaps(genomeMotifGR,regionGR,ignore.strand=TRUE)
 
     # get vector of read names for each gr
     CGreads<-colnames(GenomicRanges::mcols(matCGgr))
@@ -255,8 +256,10 @@ combineCGandGCmatrices<-function(matCG,matGC,regionGR,genomeMotifGR){
     maxval1<-function(m1){
       ifelse(is.na(m1), NA, ifelse(m1>1, 1, m1))
     }
-    GenomicRanges::mcols(cg)[,2:dim(GenomicRanges::mcols(cg))[2]]<-data.table::as.data.table(maxval1(as.matrix(GenomicRanges::mcols(cg)[,2:dim(GenomicRanges::mcols(cg))[2]])))
-    GenomicRanges::mcols(gc)[,2:dim(GenomicRanges::mcols(gc))[2]]<-data.table::as.data.table(maxval1(as.matrix(GenomicRanges::mcols(gc)[,2:dim(GenomicRanges::mcols(gc))[2]])))
+    GenomicRanges::mcols(cg)[,2:dim(GenomicRanges::mcols(cg))[2]]<-
+      data.table::as.data.table(maxval1(as.matrix(GenomicRanges::mcols(cg)[,2:dim(GenomicRanges::mcols(cg))[2]])))
+    GenomicRanges::mcols(gc)[,2:dim(GenomicRanges::mcols(gc))[2]]<-
+      data.table::as.data.table(maxval1(as.matrix(GenomicRanges::mcols(gc)[,2:dim(GenomicRanges::mcols(gc))[2]])))
 
     # find gr that overlap between cg and gc calls
     ol<-IRanges::findOverlaps(cg,gc)
@@ -324,9 +327,11 @@ getMethFreqGR<-function(baseFileName,pathToMethCalls,motifFile,minDepth=5) {
   colnames(GenomicRanges::mcols(methCG))<-c("methPercent","methylated","nonMethylated")
   methCG$readDepth<-rowSums(cbind(methCG$methylated,methCG$nonMethylated))
   methCG<-methCG[methCG$readDepth>minDepth]
-  methCHH<-rtracklayer::import(paste0(pathToMethCalls,"/",baseFileName,"_CHH.bedGraph"),format="bedGraph")
+  methCHH<-rtracklayer::import(paste0(pathToMethCalls,"/",
+                                      baseFileName,"_CHH.bedGraph"),format="bedGraph")
   colnames(GenomicRanges::mcols(methCHH))<-c("methPercent","methylated","nonMethylated")
-  methCHG<-rtracklayer::import(paste0(pathToMethCalls,"/",baseFileName,"_CHG.bedGraph"),format="bedGraph")
+  methCHG<-rtracklayer::import(paste0(pathToMethCalls,"/",
+                                      baseFileName,"_CHG.bedGraph"),format="bedGraph")
   colnames(GenomicRanges::mcols(methCHG))<-c("methPercent","methylated","nonMethylated")
   methNonCG<-GenomicRanges::sort(c(methCHH,methCHG))
 
@@ -439,7 +444,8 @@ poorBisulfiteConversion<-function(bamFile,genomeFile,bedFileC,bedFileG,regionGR)
   df<-merge(dfc,dfg,by=c("reads"),all=TRUE)
   df[is.na(df)]<-0
   keepDFC<-df$fractionConverted.x>=df$fractionConverted.y
-  df[!keepDFC,c("informativeCs.x","totalCs.x","fractionConverted.x")]<-df[!keepDFC,c("informativeCs.y","totalCs.y","fractionConverted.y")]
+  df[!keepDFC,c("informativeCs.x","totalCs.x","fractionConverted.x")]<-
+    df[!keepDFC,c("informativeCs.y","totalCs.y","fractionConverted.y")]
   df[,c("informativeCs.y","totalCs.y","fractionConverted.y")]<-NULL
   colnames(df)<-gsub("\\.x","",colnames(df))
   return(df)

@@ -27,7 +27,7 @@ Getting single read matrices requires:
 The bed files can be created from a file containing the genomic sequence. So first we read in the paths to the genome sequence, the bam file and regions of interest.
 ```{r}
 genomeFile="/Users/semple/Documents/MeisterLab/GenomeVer/sequence/c_elegans.PRJNA13758.WS250.genomic.fa"
-bamFile="/Users/semple/Documents/MeisterLab/sequencingData/20190206_dSMFv016v020_N2gw_spike100pe/bwaMeth/test20190405/aln/dS16N2gw_20190206.noOL.bam"
+bamFile="/Users/semple/Documents/MeisterLab/sequencingData/20190218_dSMFv016v020_N2gw_2x150pe/properpair/aln/dS16N2gw_20190218.noOL.bam"
 amplicons=readRDS("/Users/semple/Documents/MeisterLab/dSMF/PromoterPrimerDesign/usefulObjects/ampliconGR.RDS")
 names(GenomicRanges::mcols(amplicons))<-"ID"
 regionGR=nanodsmf::ucscToWbGR(amplicons[1])
@@ -50,14 +50,14 @@ bedFileGC="/Users/semple/Documents/MeisterLab/GenomeVer/sequence/c_elegans.PRJNA
 One also has to create a GRanges object with a list of unique, non-overlapping CG and GC motifs in the genome. This can be done with the **nanodsmf::findGenomeMotifs** function, and then saved as an RDS. Note that this function takes a long time to run (3.5h on the C. elegans genome, for example)!
 
 ```{r eval=FALSE}
-gnmMotifGR<-nanodsmf::findGenomeMotifs(genomeFile)
-saveRDS(gnmMotifGR,"/Users/semple/Documents/MeisterLab/GenomeVer/sequence/c_elegans.PRJNA13758.WS260.genomicCGGC_motifs.RDS")
+genomeMotifGR<-nanodsmf::findGenomeMotifs(genomeFile)
+saveRDS(genomeMotifGR,"/Users/semple/Documents/MeisterLab/GenomeVer/sequence/c_elegans.PRJNA13758.WS250.genomic.CGGC_motifs.RDS")
 ```
 
 Once the RDS is saved it can be loaded for all future analyses.
 
 ```{r}
-gnmMotifGR<-readRDS("/Users/semple/Documents/MeisterLab/GenomeVer/sequence/c_elegans.PRJNA13758.WS260.genomicCGGC_motifs.RDS")
+genomeMotifGR<-readRDS("/Users/semple/Documents/MeisterLab/GenomeVer/sequence/c_elegans.PRJNA13758.WS250.genomic.CGGC_motifs.RDS")
 ```
 
 Note that getting a unique, non-overlapping list of CG and GC motifs requires some manipulation, since triplet motifs such as GCG or CGC and longer runs CGCG.. or GCGC... will have multiple overlapping CG and GC motifs within them. To deal with this we treat isolated triplets as a single motif. Longer runs of CGCG.. or GCGC... are artifically split. If their length is even, they are split into doublets and if their length is odd, one triplet is split off and the rest is split into doublets. Unlike NOME-seq, where you might want to distinguish between CG and GC motifs because they convey different types of information (and therefore GCG motifs are discarded), in DSMF, both motifs give an indication of DNA accessibility, therefore this approach allows simplification of the data without loss of overlapping sites.

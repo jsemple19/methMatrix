@@ -195,9 +195,10 @@ getFullMatrices<-function(matList,regionType,winSize=500) {
 #'  in the forward orientation.
 #' @export
 getRelativeCoordMats<-function(matList, regionGRs, regionType, anchorCoord=0) {
+  workDir="."
   naRows<-is.na(matList$filename)
   matList<-matList[!naRows,]
-  makeDirs(path,paste0("rds/relCoord_",regionType))
+  makeDirs(workDir,paste0("/rds/relCoord_",regionType))
   matrixLog<-matList[,c("filename","sample","region")]
   matrixLog$filename<-NA
   matrixLog$reads<-NA
@@ -213,13 +214,13 @@ getRelativeCoordMats<-function(matList, regionGRs, regionType, anchorCoord=0) {
     } else {
       newMat<-mat
     }
-    matName<-paste0(path,"/rds/relCoord_",regionType,"/",matList$sample[i],"_",regionGR$ID,".rds")
+    matName<-paste0(workDir,"/rds/relCoord_",regionType,"/",matList$sample[i],"_",regionGR$ID,".rds")
     saveRDS(newMat,file=matName)
     matrixLog[i,"filename"]<-matName
     matrixLog[i,"reads"]<-dim(newMat)[1]
     matrixLog[i,"motifs"]<-dim(newMat)[2]
   }
-  utils::write.csv(matrixLog,paste0(path,"/csv/MatrixLog_relCoord_",regionType,".csv"), quote=F, row.names=F)
+  utils::write.csv(matrixLog,paste0(workDir,"/csv/MatrixLog_relCoord_",regionType,".csv"), quote=F, row.names=F)
   return(matrixLog)
 }
 
@@ -293,7 +294,7 @@ plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs="", myXlab="
   mat<-mat[!tooManyNAs,]
   if (!is.null(dim(mat)) & any(dim(mat)[1]>10)) {
     regionGR<-regionGRs[match(regionName,regionGRs$ID)]
-    if (length(featureGRs)>0) {
+    if (length(featureGRs)>1) {
       featGR<-featureGRs[match(regionName,featureGRs$ID)]
     }
     na.matrix<-is.na(mat)
@@ -442,7 +443,7 @@ plotSingleMoleculesWithAvr<-function(mat, regionName, regionGRs, featureGRs,
                               arrow=ggplot2::arrow(length = ggplot2::unit(0.2, "cm")))
       }
     }
-    #singel molecule plot
+    #single molecule plot
     p2<-ggplot2::ggplot(d,ggplot2::aes(x=position,y=molecules,width=2)) +
       ggplot2::geom_tile(ggplot2::aes(width=3,fill=methylation),alpha=0.8) +
       ggplot2::scale_fill_gradient(low="blue", high="red", na.value="transparent",
