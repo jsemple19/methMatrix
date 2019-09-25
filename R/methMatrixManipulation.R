@@ -122,7 +122,7 @@ getRelativeCoord<-function(mat,regionGR,invert=F){
   } else {
     newPos<-regionEnd-pos
     colnames(mat)<-newPos
-    mat<-mat[,order(colnames(mat)),drop=F]
+    mat<-mat[,order(as.numeric(colnames(mat))),drop=F]
     colnames(mat)<-as.character(colnames(mat))
   }
   return(mat)
@@ -209,7 +209,8 @@ getRelativeCoordMats<-function(matList, regionGRs, regionType, anchorCoord=0) {
     if(sum(dim(mat)==c(0,0))<1) {
        regionID<-matList$region[i]
        regionGR<-regionGRs[regionGRs$ID==regionID]
-       newMat<-getRelativeCoord(mat,regionGR,invert=ifelse(GenomicRanges::strand(regionGR)=="+",F,T))
+       newMat<-getRelativeCoord(mat, regionGR,
+                                invert=ifelse(GenomicRanges::strand(regionGR)=="+",F,T))
        newMat<-changeAnchorCoord(mat=newMat,anchorCoord=anchorCoord)
     } else {
       newMat<-mat
@@ -280,7 +281,8 @@ getMetaMethFreq<-function(matList,regionGRs,minReads=50) {
 #' @param maxNAfraction Maximual fraction of CpG/GpC positions that can be undefined (default=0.2)
 #' @return A ggplot2 plot object
 #' @export
-plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs="", myXlab="CpG/GpC position",
+plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs="",
+                              myXlab="CpG/GpC position",
                               featureLabel="TSS", drawArrow=TRUE, title=NULL, baseFontSize=12,
                               maxNAfraction=0.2) {
   ### single molecule plot. mat is matrix containing methylation values at different postions
