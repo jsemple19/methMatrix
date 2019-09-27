@@ -517,12 +517,18 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
   }
   samples<-sampleTable$SampleName
 
-  #log table to record number of reads in matrix at various steps
-  matrixLog<-data.frame(filename=NA,sample=rep(samples,each=length(regionGRs)),
-                        region=rep(regionGRs$ID,length(samples)),
-                        numCGpos=NA, numGCpos=NA, numUniquePos=NA,
-                        CGreads=NA, GCreads=NA, methMatReads=NA,
-                        goodConvReads=NA, fewNAreads=NA,stringsAsFactors=F)
+  if (file.exists(paste0(path,"/csv/MatrixLog_",regionType,".csv"))) {
+    # this allows restarting
+    matrixLog<-utils::read.csv(paste0(path,"/csv/MatrixLog_",regionType,".csv"),
+                               quote=F, row.names=F,stringsAsFactors=F)
+  } else {
+    #log table to record number of reads in matrix at various steps
+    matrixLog<-data.frame(filename=NA,sample=rep(samples,each=length(regionGRs)),
+                          region=rep(regionGRs$ID,length(samples)),
+                          numCGpos=NA, numGCpos=NA, numUniquePos=NA,
+                          CGreads=NA, GCreads=NA, methMatReads=NA,
+                          goodConvReads=NA, fewNAreads=NA,stringsAsFactors=F)
+  }
 
   for (currentSample in samples) {
     print(currentSample)
@@ -587,12 +593,15 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
         matName<-paste0(path,"/rds/methMats_",regionType,"/",currentSample,"_",regionGR$ID,".rds")
         saveRDS(methMat,file=matName)
         matrixLog[j,"filename"]<-matName
+        # write intermediate data to file so that if it crashes one can restart
+        utils::write.csv(matrixLog,paste0(path,"/csv/MatrixLog_",regionType,".csv"), quote=F, row.names=F)
       }
     }
     if (convRatePlots==TRUE) {
       #TODO:combine PDF function
     }
   }
+  # overwrite file with final data
   utils::write.csv(matrixLog,paste0(path,"/csv/MatrixLog_",regionType,".csv"), quote=F, row.names=F)
   return(matrixLog)
 }
