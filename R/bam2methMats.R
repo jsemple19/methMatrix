@@ -543,18 +543,22 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
         methMat<-1-convMat
         j<-which(matrixLog$sample==currentSample & matrixLog$region==regionGR$ID)
         # record number of reads in the matrices
-        matrixLog[j,"numCGpos"]<-dim(matCG)[2]
-        matrixLog[j,"numGCpos"]<-dim(matGC)[2]
-        matrixLog[j,"numUniquePos"]<-dim(methMat)[2]
-        matrixLog[j,"CGreads"]<-dim(matCG)[1]
-        matrixLog[j,"GCreads"]<-dim(matGC)[1]
-        matrixLog[j,"methMatReads"]<-dim(methMat)[1]
+        matrixLog[j,"numCGpos"]<-ifelse(!is.null(dim(matCG)[2]),dim(matCG)[2],0)
+        matrixLog[j,"numGCpos"]<-ifelse(!is.null(dim(matGC)[2]),dim(matGC)[2],0)
+        matrixLog[j,"numUniquePos"]<-ifelse(!is.null(dim(methMat)[2]),dim(methMat)[2],0)
+        matrixLog[j,"CGreads"]<-ifelse(!is.null(dim(matCG)[1]), dim(matCG)[1],0)
+        matrixLog[j,"GCreads"]<-ifelse(!is.null(dim(matGC)[1]),dim(matGC)[1],0)
+        matrixLog[j,"methMatReads"]<-ifelse(!is.null(dim(methMat)[1]),dim(methMat)[1],0)
 
         # get bisulfite conversion stats for Cs in non-methylated context
         df<-poorBisulfiteConversion(bamFile,genomeFile,bedFileC,bedFileG,regionGR)
         removeReads<-df[df$fractionConverted<minConversionRate,"reads"]
         methMat<-methMat[!(rownames(methMat) %in% removeReads),]
-        matrixLog[j,"goodConvReads"]<-dim(methMat)[1]
+        matrixLog[j,"goodConvReads"]<-ifelse(!is.null(dim(methMat)[1]),dim(methMat)[1],0)
+
+        if (is.null(dim(methMat))) {
+          next
+        }
         if (convRatePlots==TRUE) {
         ## plot histogram of number informative Cs per read
           p<-ggplot2::ggplot(df,ggplot2::aes(x=informativeCs/totalCs)) + ggplot2::geom_histogram() +
