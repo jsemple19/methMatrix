@@ -517,18 +517,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
   }
   samples<-sampleTable$SampleName
 
-  if (file.exists(paste0(path,"/csv/MatrixLog_",regionType,".csv"))) {
-    # this allows restarting
-    matrixLog<-utils::read.csv(paste0(path,"/csv/MatrixLog_",regionType,".csv"),
-                               quote=F, row.names=F,stringsAsFactors=F)
-  } else {
-    #log table to record number of reads in matrix at various steps
-    matrixLog<-data.frame(filename=NA,sample=rep(samples,each=length(regionGRs)),
-                          region=rep(regionGRs$ID,length(samples)),
-                          numCGpos=NA, numGCpos=NA, numUniquePos=NA,
-                          CGreads=NA, GCreads=NA, methMatReads=NA,
-                          goodConvReads=NA, fewNAreads=NA,stringsAsFactors=F)
-  }
+  matrixLog<-getMatrixLog(paste0(path,"/csv/MatrixLog_",regionType,".csv"),samples,regionGRs)
 
   for (currentSample in samples) {
     print(currentSample)
@@ -606,6 +595,29 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
   return(matrixLog)
 }
 
+
+#' Read in an existing matrixLog, or create a new one
+#'
+#' Input requires matrixLog file name with correct path. If file exists it will be read
+#' in, otherwise an empty data.frame will be created with the correct number of fields
+#' for the samples (samples) and the regions (regionGRs). Teh function returns this
+#' matrixLog data.frame
+#' @param matrixLogFile Name of matrix log file complete with relative or absolut path
+#' @return A data frame with columns to record data about the single molecule matrices
+getMatrixLog<-function(matrixLogFile, samples, regionGRs){
+  if (file.exists(matrixLogFile)) {
+    # this allows restarting
+    matrixLog<-utils::read.csv(matrixLogFile, stringsAsFactors=F)
+  } else {
+    #log table to record number of reads in matrix at various steps
+    matrixLog<-data.frame(filename=NA,sample=rep(samples,each=length(regionGRs)),
+                          region=rep(regionGRs$ID,length(samples)),
+                          numCGpos=NA, numGCpos=NA, numUniquePos=NA,
+                          CGreads=NA, GCreads=NA, methMatReads=NA,
+                          goodConvReads=NA, fewNAreads=NA,stringsAsFactors=F)
+  }
+  return(matrixLog)
+}
 
 
 
