@@ -603,6 +603,8 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
 #' for the samples (samples) and the regions (regionGRs). Teh function returns this
 #' matrixLog data.frame
 #' @param matrixLogFile Name of matrix log file complete with relative or absolut path
+#' @param samples Vector with names of samples to be processed
+#' @param regionGRs A genomic regions object with all regions for which matrices should be extracted. The metadata columns must contain a column called "ID" with a unique ID for that region.
 #' @return A data frame with columns to record data about the single molecule matrices
 getMatrixLog<-function(matrixLogFile, samples, regionGRs){
   if (file.exists(matrixLogFile)) {
