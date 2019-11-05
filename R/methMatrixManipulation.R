@@ -156,9 +156,10 @@ changeAnchorCoord<-function(mat,anchorCoord=0) {
 #' @param matList A table of paths to matrices which have the same columns
 #' @param regionType A name for the type of region the matrices desribe
 #' @param winSize The size (in bp) of the window containing the matrices
+#' @param path The path to working directory
 #' @return A table of file paths to padded methylation matrices
 #' @export
-getFullMatrices<-function(matList,regionType,winSize=500) {
+getFullMatrices<-function(matList,regionType,winSize=500, path=".") {
   naRows<-is.na(matList$filename)
   matList<-matList[!naRows,]
   makeDirs(path,paste0("rds/paddedMats_",regionType))
@@ -502,12 +503,12 @@ plotSingleMoleculesWithAvr<-function(mat, regionName, regionGRs, featureGRs,
 #' @param withAvr Boolean value: should single molecule plots be plotted together with the average profile (default=FALSE)
 #' @param includeInFileName String to be included at the end of the plot file name, e.g. experiment name (default="")
 #' @param drawArrow Boolean: should the feature be drawn as an arrow or just a line? (default=TRUE)
+#' @param path Path to working directory
 #' @return Plots are written to plots directory
 #' @export
 plotAllMatrices<-function(allSampleMats, samples, regionGRs, featureGRs, regionType,
                           featureLabel="TSS", maxNAfraction=0.2,withAvr=FALSE,
-                          includeInFileName="", drawArrow=TRUE) {
-  path="."
+                          includeInFileName="", drawArrow=TRUE, path=".") {
   # convert any factor variables to character
   f <- sapply(allSampleMats, is.factor)
   allSampleMats[f] <- lapply(allSampleMats[f], as.character)

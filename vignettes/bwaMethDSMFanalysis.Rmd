@@ -87,7 +87,7 @@ This are very sparse matrices because forward and reverse reads will have C call
 The output of the **combineCGandGCmatrices** function is a single matrix with reads as rows and C positions within unique, non-overlapping CG, GC or GCGorCGC motifs as columns. The matrix contains values between 0 (non methylated) and 1 (methylated), as well as NAs for positions without a methylation call.
 
 ```{r}
-methMat<-methMatrix::combineCGandGCmatrices(matCG,matGC,regionGR,gnmMotifGR)
+methMat<-methMatrix::combineCGandGCmatrices(matCG,matGC,regionGR,genomeMotifGR)
 methMat[2:5,10:18]
 colSums(methMat,na.rm=T)
 
@@ -122,6 +122,10 @@ tssWin<-tssWin[idx]
 
 regionType<-"TSS"
 winSize<-500
+
+matTableFile<-system.file("extdata", "csv/MatrixLog_relCoord_ampTSS.csv", package="methMatrix", mustWork=TRUE)
+matTable<-read.csv(matTableFile,stringsAsFactors=F)
+matTable$filename <-system.file("extdata", matTable[,"filename"], package="methMatrix", mustWork=TRUE)
 
 allSampleRelCoordMats<-getRelativeCoordMats(matList=matTable, regionGRs=tssWin, regionType=regionType, anchorCoord=winSize/2)
 
