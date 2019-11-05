@@ -222,6 +222,9 @@ getRelativeCoordMats<-function(matList, regionGRs, regionType, anchorCoord=0,wor
     matrixLog[i,"reads"]<-dim(newMat)[1]
     matrixLog[i,"motifs"]<-dim(newMat)[2]
   }
+  if (! dir.exists(paste0(workDir,"/csv/"))) {
+    dir.create(paste0(workDir,"/csv/"))
+  }
   utils::write.csv(matrixLog,paste0(workDir,"/csv/MatrixLog_relCoord_",regionType,".csv"), quote=F, row.names=F)
   return(matrixLog)
 }

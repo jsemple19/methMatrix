@@ -4,7 +4,8 @@
 \alias{getRelativeCoordMats}
 \title{Convert C position numbering from genomic to relative coordinates for a list of matrices}
 \usage{
-getRelativeCoordMats(matList, regionGRs, regionType, anchorCoord = 0)
+getRelativeCoordMats(matList, regionGRs, regionType, anchorCoord = 0,
+  workDir = ".")
 }
 \arguments{
 \item{matList}{A table of paths to methylation matrices with names that match the regionGRs object}
@@ -12,8 +13,10 @@ getRelativeCoordMats(matList, regionGRs, regionType, anchorCoord = 0)
 \item{regionGRs}{A genomicRanges object of the regions relative to which the new coordinates are caclulated
 with a metadata column called "ID" containing names that match the methylation matrices in matList}
 
-\item{anchorCoord}{The coordinate which will be set as the 0 position for relative coordinates
-(default=0)}
+\item{anchorCoord}{The coordinate which will be set as the 0 position for relative
+coordinates (default=0)}
+
+\item{workDir}{path to working directory}
 }
 \value{
 A list of methylation matrices that have been converted from abslute genomic coordinates
