@@ -4,7 +4,7 @@
 \alias{getFullMatrices}
 \title{Get full matrix of all positions in a window even if no C}
 \usage{
-getFullMatrices(matList, regionType, winSize = 500)
+getFullMatrices(matList, regionType, winSize = 500, path = ".")
 }
 \arguments{
 \item{matList}{A table of paths to matrices which have the same columns}
@@ -12,6 +12,8 @@ getFullMatrices(matList, regionType, winSize = 500)
 \item{regionType}{A name for the type of region the matrices desribe}
 
 \item{winSize}{The size (in bp) of the window containing the matrices}
+
+\item{path}{The path to working directory}
 }
 \value{
 A table of file paths to padded methylation matrices

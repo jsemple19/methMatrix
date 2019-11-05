@@ -156,13 +156,13 @@ changeAnchorCoord<-function(mat,anchorCoord=0) {
 #' @param matList A table of paths to matrices which have the same columns
 #' @param regionType A name for the type of region the matrices desribe
 #' @param winSize The size (in bp) of the window containing the matrices
-#' @param path The path to working directory
+#' @param workDir The path to working directory
 #' @return A table of file paths to padded methylation matrices
 #' @export
-getFullMatrices<-function(matList,regionType,winSize=500, path=".") {
+getFullMatrices<-function(matList,regionType,winSize=500, workDir=".") {
   naRows<-is.na(matList$filename)
   matList<-matList[!naRows,]
-  makeDirs(path,paste0("rds/paddedMats_",regionType))
+  makeDirs(workDir,paste0("rds/paddedMats_",regionType))
   matrixLog<-matList[,c("filename","sample","region")]
   matrixLog$filename<-NA
   for (i in 1:nrow(matList)) {
@@ -173,11 +173,11 @@ getFullMatrices<-function(matList,regionType,winSize=500, path=".") {
     fullMat<-matrix(data=NaN,nrow=dim(mat)[1],ncol=winSize)
     colnames(fullMat)<-c(seq(-winSize/2,-1),seq(1,winSize/2))
     fullMat[,Cpos[withinRange]]<-mat[,withinRange]
-    matName<-paste0(path,"/rds/paddedMats_",regionType,"/",currentSample,"_",regionGR$ID,".rds")
+    matName<-paste0(workDir,"/rds/paddedMats_",regionType,"/",currentSample,"_",regionGR$ID,".rds")
     saveRDS(fullMat,file=matName)
     matrixLog[i,"filename"]<-matName
   }
-  utils::write.csv(matrixLog,paste0(path,"/csv/MatrixLog_paddedMats_",regionType,".csv"), quote=F, row.names=F)
+  utils::write.csv(matrixLog,paste0(workDir,"/csv/MatrixLog_paddedMats_",regionType,".csv"), quote=F, row.names=F)
   return(matrixLog)
 }
 
@@ -189,14 +189,14 @@ getFullMatrices<-function(matList,regionType,winSize=500, path=".") {
 #' @param matList A table of paths to methylation matrices with names that match the regionGRs object
 #' @param regionGRs A genomicRanges object of the regions relative to which the new coordinates are caclulated
 #' with a metadata column called "ID" containing names that match the methylation matrices in matList
-#' @param anchorCoord  The coordinate which will be set as the 0 position for relative coordinates
-#' (default=0)
+#' @param anchorCoord  The coordinate which will be set as the 0 position for relative
+#' coordinates (default=0)
+#' @param workDir path to working directory
 #' @return A list of methylation matrices that have been converted from abslute genomic coordinates
 #'  to relativepositions within the genomicRanges regionGRs. regionGRs on the negative strand will be flipped to be
 #'  in the forward orientation.
 #' @export
-getRelativeCoordMats<-function(matList, regionGRs, regionType, anchorCoord=0) {
-  workDir="."
+getRelativeCoordMats<-function(matList, regionGRs, regionType, anchorCoord=0,workDir=".") {
   naRows<-is.na(matList$filename)
   matList<-matList[!naRows,]
   makeDirs(workDir,paste0("/rds/relCoord_",regionType))
@@ -503,12 +503,12 @@ plotSingleMoleculesWithAvr<-function(mat, regionName, regionGRs, featureGRs,
 #' @param withAvr Boolean value: should single molecule plots be plotted together with the average profile (default=FALSE)
 #' @param includeInFileName String to be included at the end of the plot file name, e.g. experiment name (default="")
 #' @param drawArrow Boolean: should the feature be drawn as an arrow or just a line? (default=TRUE)
-#' @param path Path to working directory
+#' @param workDir Path to working directory
 #' @return Plots are written to plots directory
 #' @export
 plotAllMatrices<-function(allSampleMats, samples, regionGRs, featureGRs, regionType,
                           featureLabel="TSS", maxNAfraction=0.2,withAvr=FALSE,
-                          includeInFileName="", drawArrow=TRUE, path=".") {
+                          includeInFileName="", drawArrow=TRUE, workDir=".") {
   # convert any factor variables to character
   f <- sapply(allSampleMats, is.factor)
   allSampleMats[f] <- lapply(allSampleMats[f], as.character)
@@ -520,9 +520,9 @@ plotAllMatrices<-function(allSampleMats, samples, regionGRs, featureGRs, regionT
   # plot single molecule matrices on their own
   for (i in allAmp2plot) {
     if (withAvr==TRUE) {
-      makeDirs(path,paste0("plots/singleMoleculePlotsAvr_",regionType))
+      makeDirs(workDir,paste0("plots/singleMoleculePlotsAvr_",regionType))
     } else {
-      makeDirs(path,paste0("plots/singleMoleculePlots_",regionType))
+      makeDirs(workDir,paste0("plots/singleMoleculePlots_",regionType))
     }
     plotList=list()
     print(paste0("plotting ", i))
@@ -572,11 +572,11 @@ plotAllMatrices<-function(allSampleMats, samples, regionGRs, featureGRs, regionT
         toPlot<-toPlot[toPlot<=length(plotList)] #make sure only valid plot numbers used
         mp<-gridExtra::marrangeGrob(grobs=plotList[toPlot],nrow=2,ncol=2,top=title)
         if (withAvr==TRUE) {
-          ggplot2::ggsave(paste0(path,"/plots/singleMoleculePlotsAvr_", regionType,
+          ggplot2::ggsave(paste0(workDir,"/plots/singleMoleculePlotsAvr_", regionType,
                                  "/", chr,"_",i,spacer,includeInFileName,"_",page,".png"),
                         plot=mp, device="png", width=20, height=29, units="cm")
         } else {
-          ggplot2::ggsave(paste0(path,"/plots/singleMoleculePlots_",regionType,
+          ggplot2::ggsave(paste0(workDir,"/plots/singleMoleculePlots_",regionType,
                                  "/",chr,"_",i, spacer, includeInFileName,"_",page,".png"),
                         plot=mp, device="png", width=29, height=20, units="cm")
         }

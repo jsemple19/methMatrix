@@ -127,7 +127,7 @@ matTableFile<-system.file("extdata", "csv/MatrixLog_relCoord_ampTSS.csv", packag
 matTable<-read.csv(matTableFile,stringsAsFactors=F)
 matTable$filename <-system.file("extdata", matTable[,"filename"], package="methMatrix", mustWork=TRUE)
 
-allSampleRelCoordMats<-getRelativeCoordMats(matList=matTable, regionGRs=tssWin, regionType=regionType, anchorCoord=winSize/2)
+allSampleRelCoordMats<-getRelativeCoordMats(matList=matTable, regionGRs=tssWin, regionType=regionType, anchorCoord=winSize/2, path="")
 
 ```
 

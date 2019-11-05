@@ -6,7 +6,7 @@
 \usage{
 plotAllMatrices(allSampleMats, samples, regionGRs, featureGRs, regionType,
   featureLabel = "TSS", maxNAfraction = 0.2, withAvr = FALSE,
-  includeInFileName = "", drawArrow = TRUE)
+  includeInFileName = "", drawArrow = TRUE, path = ".")
 }
 \arguments{
 \item{allSampleMats}{A list (by sample) of lists (by regions) of methylation matrices}
@@ -28,6 +28,8 @@ plotAllMatrices(allSampleMats, samples, regionGRs, featureGRs, regionType,
 \item{includeInFileName}{String to be included at the end of the plot file name, e.g. experiment name (default="")}
 
 \item{drawArrow}{Boolean: should the feature be drawn as an arrow or just a line? (default=TRUE)}
+
+\item{path}{Path to working directory}
 }
 \value{
 Plots are written to plots directory
