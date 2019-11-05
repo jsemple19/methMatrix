@@ -555,24 +555,30 @@ plotAllMatrices<-function(allSampleMats, samples, regionGRs, featureGRs, regionT
       }
     }
     if (length(plotList)>0) {
-      regionGR<-regionGRs[match(i,regionGRs$ID)]
-      featGR<-featureGRs[match(i,featureGRs$ID)]
-      chr<-GenomicRanges::seqnames(regionGR)
-      strandInfo<-ifelse(GenomicRanges::strand(featGR)!=GenomicRanges::strand(regionGR),
+      numPages=ceiling(length(plotList)/4)
+      for (page in 1:numPages) {
+        regionGR<-regionGRs[match(i,regionGRs$ID)]
+        featGR<-featureGRs[match(i,featureGRs$ID)]
+        chr<-GenomicRanges::seqnames(regionGR)
+        strandInfo<-ifelse(GenomicRanges::strand(featGR)!=GenomicRanges::strand(regionGR),
                          paste0("reg: ",GenomicRanges::strand(regionGR),"ve, ",
-                                featureLabel,": ",GenomicRanges::strand(featGR),"ve strand"),
+                                featureLabel,": ",GenomicRanges::strand(featGR),
+                                "ve strand"),
                          paste0(GenomicRanges::strand(regionGR),"ve strand"))
-      title<-paste0(i, ": ",chr," ",strandInfo)
-      spacer<-ifelse(length(includeInFileName)>0,"_","")
-      mp<-gridExtra::marrangeGrob(grobs=plotList,nrow=2,ncol=2,top=title)
-      if (withAvr==TRUE) {
-        ggplot2::ggsave(paste0(path,"/plots/singleMoleculePlotsAvr_",regionType,"/",chr,"_",i,
-                               spacer,includeInFileName,".png"),
+        title<-paste0(i, ": ",chr," ",strandInfo)
+        spacer<-ifelse(length(includeInFileName)>0,"_","")
+        toPlot<-c(1:4)+4*(page-1) #get plots for this page
+        toPlot<-toPlot[toPlot<=length(plotList)] #make sure only valid plot numbers used
+        mp<-gridExtra::marrangeGrob(grobs=plotList[toPlot],nrow=2,ncol=2,top=title)
+        if (withAvr==TRUE) {
+          ggplot2::ggsave(paste0(path,"/plots/singleMoleculePlotsAvr_", regionType,
+                                 "/", chr,"_",i,spacer,includeInFileName,"_",page,".png"),
                         plot=mp, device="png", width=20, height=29, units="cm")
-      } else {
-        ggplot2::ggsave(paste0(path,"/plots/singleMoleculePlots_",regionType,"/",chr,"_",i,
-                               spacer, includeInFileName,".png"),
+        } else {
+          ggplot2::ggsave(paste0(path,"/plots/singleMoleculePlots_",regionType,
+                                 "/",chr,"_",i, spacer, includeInFileName,"_",page,".png"),
                         plot=mp, device="png", width=29, height=20, units="cm")
+        }
       }
     }
   }
