@@ -127,7 +127,18 @@ matTableFile<-system.file("extdata", "csv/MatrixLog_relCoord_ampTSS.csv", packag
 matTable<-read.csv(matTableFile,stringsAsFactors=F)
 matTable$filename <-system.file("extdata", matTable[,"filename"], package="methMatrix", mustWork=TRUE)
 
-allSampleRelCoordMats<-getRelativeCoordMats(matList=matTable, regionGRs=tssWin, regionType=regionType, anchorCoord=winSize/2, path="")
+allSampleRelCoordMats<-getRelativeCoordMats(matList=matTable, regionGRs=tssWin, regionType=regionType, anchorCoord=winSize/2)
+
+TSSrelCoord<-convertGRtoRelCoord(tssWin,1,anchorPoint="middle")
+tssWinRelCoord<-convertGRtoRelCoord(tssWin,winSize,anchorPoint="middle")
+
+minConversionRate=0.8
+maxNAfraction=0.2
+seqDate=""
+plotAllMatrices(allSampleRelCoordMats, samples, regionGRs=tssWinRelCoord,  
+                featureGRs=TSSrelCoord, featureLabel="TSS", regionType=regionType,
+                maxNAfraction=maxNAfraction, withAvr=FALSE,
+                includeInFileName=seqDate, drawArrow=FALSE)
 
 ```
 
