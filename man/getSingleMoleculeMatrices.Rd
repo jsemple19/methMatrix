@@ -4,9 +4,18 @@
 \alias{getSingleMoleculeMatrices}
 \title{Extract list of methylation matrices}
 \usage{
-getSingleMoleculeMatrices(sampleTable, genomeFile, regionGRs, regionType,
-  genomeMotifGR, minConversionRate = 0.8, maxNAfraction = 0.2,
-  bedFilePrefix = NULL, path = ".", convRatePlots = FALSE)
+getSingleMoleculeMatrices(
+  sampleTable,
+  genomeFile,
+  regionGRs,
+  regionType,
+  genomeMotifGR,
+  minConversionRate = 0.8,
+  maxNAfraction = 0.2,
+  bedFilePrefix = NULL,
+  path = ".",
+  convRatePlots = FALSE
+)
 }
 \arguments{
 \item{sampleTable}{Table with FileName column listing the full path to bam files belonging to the samples listed in the SampleName column}

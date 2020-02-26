@@ -4,10 +4,18 @@
 \alias{plotSingleMoleculesWithAvr}
 \title{Single molecule plot of a methylation matrix with average methylation frequency}
 \usage{
-plotSingleMoleculesWithAvr(mat, regionName, regionGRs, featureGRs,
-  myXlab = "CpG/GpC position", featureLabel = "TSS",
-  drawArrow = TRUE, title = NULL, baseFontSize = 11,
-  maxNAfraction = 0.2)
+plotSingleMoleculesWithAvr(
+  mat,
+  regionName,
+  regionGRs,
+  featureGRs,
+  myXlab = "CpG/GpC position",
+  featureLabel = "TSS",
+  drawArrow = TRUE,
+  title = NULL,
+  baseFontSize = 11,
+  maxNAfraction = 0.2
+)
 }
 \arguments{
 \item{mat}{A methylation matrix}

@@ -4,10 +4,18 @@
 \alias{plotSingleMolecules}
 \title{Single molecule plot of a methylation matrix}
 \usage{
-plotSingleMolecules(mat, regionName, regionGRs, featureGRs = "",
-  myXlab = "CpG/GpC position", featureLabel = "TSS",
-  drawArrow = TRUE, title = NULL, baseFontSize = 12,
-  maxNAfraction = 0.2)
+plotSingleMolecules(
+  mat,
+  regionName,
+  regionGRs,
+  featureGRs = "",
+  myXlab = "CpG/GpC position",
+  featureLabel = "TSS",
+  drawArrow = TRUE,
+  title = NULL,
+  baseFontSize = 12,
+  maxNAfraction = 0.2
+)
 }
 \arguments{
 \item{mat}{A methylation matrix}

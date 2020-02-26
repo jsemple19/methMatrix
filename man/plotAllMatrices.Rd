@@ -4,9 +4,19 @@
 \alias{plotAllMatrices}
 \title{Plot a list of list of single molecule matrices}
 \usage{
-plotAllMatrices(allSampleMats, samples, regionGRs, featureGRs, regionType,
-  featureLabel = "TSS", maxNAfraction = 0.2, withAvr = FALSE,
-  includeInFileName = "", drawArrow = TRUE, workDir = ".")
+plotAllMatrices(
+  allSampleMats,
+  samples,
+  regionGRs,
+  featureGRs,
+  regionType,
+  featureLabel = "TSS",
+  maxNAfraction = 0.2,
+  withAvr = FALSE,
+  includeInFileName = "",
+  drawArrow = TRUE,
+  workDir = "."
+)
 }
 \arguments{
 \item{allSampleMats}{A list (by sample) of lists (by regions) of methylation matrices}

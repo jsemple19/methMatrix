@@ -497,8 +497,9 @@ makeDirs<-function(path,dirNameList=c()) {
 #' @param convRatePlots Boolean value: should bisulfite conversion rate plots be created for each region? (default=FALSE)
 #' @return A list (by sample) of lists (by regions) of methylation matrices
 #' @export
-getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionType, genomeMotifGR,
-                                    minConversionRate=0.8,maxNAfraction=0.2, bedFilePrefix=NULL,
+getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionType,
+                                    genomeMotifGR, minConversionRate=0.8,
+                                    maxNAfraction=0.2, bedFilePrefix=NULL,
                                     path=".", convRatePlots=FALSE) {
   #create pathnames to bedfiles
   if (is.null(bedFilePrefix)){
@@ -517,7 +518,8 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
   }
   samples<-sampleTable$SampleName
 
-  matrixLog<-getMatrixLog(paste0(path,"/csv/MatrixLog_",regionType,".csv"),samples,regionGRs)
+  matrixLog<-getMatrixLog(paste0(path,"/csv/MatrixLog_",regionType,".csv"),samples,
+                          regionGRs)
 
   for (currentSample in samples) {
     print(currentSample)
