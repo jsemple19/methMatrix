@@ -14,7 +14,8 @@ getSingleMoleculeMatrices(
   maxNAfraction = 0.2,
   bedFilePrefix = NULL,
   path = ".",
-  convRatePlots = FALSE
+  convRatePlots = FALSE,
+  nThreads = 1
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ getSingleMoleculeMatrices(
 \item{path}{Path for output. "plots", "csv" and "rds" directories will be created here. Default is current directory.}
 
 \item{convRatePlots}{Boolean value: should bisulfite conversion rate plots be created for each region? (default=FALSE)}
+
+\item{nThreads}{number of threads for parallelisation}
 }
 \value{
 A list (by sample) of lists (by regions) of methylation matrices
