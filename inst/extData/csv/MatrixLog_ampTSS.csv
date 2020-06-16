@@ -1,0 +1,11 @@
+"filename","sample","region","numCGpos","numGCpos","numUniquePos","CGreads","GCreads","methMatReads","goodConvReads","fewNAreads"
+"/gpfs/homefs/izb/semple/myData/20181119_dSMFv002-4amp_N2-182/properpair/rds/methMats_ampTSS/dS02-182_WBGene00015947.rds","dS02-182","WBGene00015947",38,16,25,1733,1722,1733,1690,1177
+"/gpfs/homefs/izb/semple/myData/20181119_dSMFv002-4amp_N2-182/properpair/rds/methMats_ampTSS/dS02-182_WBGene00015955.rds","dS02-182","WBGene00015955",44,48,36,10851,10851,10857,10677,198
+"/gpfs/homefs/izb/semple/myData/20181119_dSMFv002-4amp_N2-182/properpair/rds/methMats_ampTSS/dS02-182_WBGene00009620.rds","dS02-182","WBGene00009620",39,20,26,3417,3415,3416,3416,3007
+"/gpfs/homefs/izb/semple/myData/20181119_dSMFv002-4amp_N2-182/properpair/rds/methMats_ampTSS/dS02-182_WBGene00009621.rds","dS02-182","WBGene00009621",36,30,25,4559,4546,4558,31,23
+"/gpfs/homefs/izb/semple/myData/20181119_dSMFv002-4amp_N2-182/properpair/rds/methMats_ampTSS/dS02-182_WBGene00009801.rds","dS02-182","WBGene00009801",28,20,21,1179,1173,1179,1177,1032
+"/gpfs/homefs/izb/semple/myData/20181119_dSMFv002-4amp_N2-182/properpair/rds/methMats_ampTSS/dS03-N2_WBGene00015947.rds","dS03-N2","WBGene00015947",38,16,25,742,738,742,742,502
+"/gpfs/homefs/izb/semple/myData/20181119_dSMFv002-4amp_N2-182/properpair/rds/methMats_ampTSS/dS03-N2_WBGene00015955.rds","dS03-N2","WBGene00015955",44,50,37,10605,10606,10613,10520,60
+"/gpfs/homefs/izb/semple/myData/20181119_dSMFv002-4amp_N2-182/properpair/rds/methMats_ampTSS/dS03-N2_WBGene00009620.rds","dS03-N2","WBGene00009620",40,22,27,1276,1265,1275,1275,965
+"/gpfs/homefs/izb/semple/myData/20181119_dSMFv002-4amp_N2-182/properpair/rds/methMats_ampTSS/dS03-N2_WBGene00009621.rds","dS03-N2","WBGene00009621",34,30,24,122,123,123,120,93
+"/gpfs/homefs/izb/semple/myData/20181119_dSMFv002-4amp_N2-182/properpair/rds/methMats_ampTSS/dS03-N2_WBGene00009801.rds","dS03-N2","WBGene00009801",28,20,21,365,352,366,365,275

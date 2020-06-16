@@ -495,12 +495,13 @@ makeDirs<-function(path,dirNameList=c()) {
 #' @param bedFilePrefix The full path and prefix of the bed file for C, G, CG and GC positions in the genome (i.e path and name of the file without the ".C.bed",".G.bed", ".CG.bed" or ".GC.bed" suffix). Defulat is NULL and assumes the bed file are in the same location as the genome sequence file.
 #' @param path Path for output. "plots", "csv" and "rds" directories will be created here. Default is current directory.
 #' @param convRatePlots Boolean value: should bisulfite conversion rate plots be created for each region? (default=FALSE)
+#' @param nThreads number of threads for parallelisation
 #' @return A list (by sample) of lists (by regions) of methylation matrices
 #' @export
 getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionType,
                                     genomeMotifGR, minConversionRate=0.8,
                                     maxNAfraction=0.2, bedFilePrefix=NULL,
-                                    path=".", convRatePlots=FALSE) {
+                                    path=".", convRatePlots=FALSE,nThreads=1) {
   #create pathnames to bedfiles
   if (is.null(bedFilePrefix)){
     bedFilePrefix=gsub("\\.fa","", genomeFile)
@@ -518,8 +519,10 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
   }
   samples<-sampleTable$SampleName
 
-  matrixLog<-getMatrixLog(paste0(path,"/csv/MatrixLog_",regionType,".csv"),samples,
-                          regionGRs)
+  addSampleName<-ifelse(length(unique(samples))==1,paste0("_",samples[1]),"")
+
+  matrixLog<-getMatrixLog(paste0(path,"/csv/MatrixLog_",regionType,
+                                 addSampleName,".csv"), samples, regionGRs)
 
   for (currentSample in samples) {
     print(currentSample)
@@ -529,6 +532,9 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
       informativeCsPlots=vector()
       conversionRatePlots=vector()
     }
+    #clst<-parallel::makeCluster(nThreads)
+    #doParallel::registerDoParallel(clst)
+
     for (i in seq_along(regionGRs)) {
       # get C conversion matrices
       regionGR<-regionGRs[i]
@@ -542,16 +548,20 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
         # record number of reads in the matrices
         matrixLog[j,"numCGpos"]<-ifelse(!is.null(dim(matCG)[2]),dim(matCG)[2],0)
         matrixLog[j,"numGCpos"]<-ifelse(!is.null(dim(matGC)[2]),dim(matGC)[2],0)
-        matrixLog[j,"numUniquePos"]<-ifelse(!is.null(dim(methMat)[2]),dim(methMat)[2],0)
+        matrixLog[j,"numUniquePos"]<-ifelse(!is.null(dim(methMat)[2]),
+                                            dim(methMat)[2],0)
         matrixLog[j,"CGreads"]<-ifelse(!is.null(dim(matCG)[1]), dim(matCG)[1],0)
-        matrixLog[j,"GCreads"]<-ifelse(!is.null(dim(matGC)[1]),dim(matGC)[1],0)
-        matrixLog[j,"methMatReads"]<-ifelse(!is.null(dim(methMat)[1]),dim(methMat)[1],0)
+        matrixLog[j,"GCreads"]<-ifelse(!is.null(dim(matGC)[1]), dim(matGC)[1],0)
+        matrixLog[j,"methMatReads"]<-ifelse(!is.null(dim(methMat)[1]),
+                                            dim(methMat)[1],0)
 
         # get bisulfite conversion stats for Cs in non-methylated context
-        df<-poorBisulfiteConversion(bamFile,genomeFile,bedFileC,bedFileG,regionGR)
+        df<-poorBisulfiteConversion(bamFile, genomeFile, bedFileC, bedFileG,
+                                    regionGR)
         removeReads<-df[df$fractionConverted<minConversionRate,"reads"]
         methMat<-methMat[!(rownames(methMat) %in% removeReads),]
-        matrixLog[j,"goodConvReads"]<-ifelse(!is.null(dim(methMat)[1]),dim(methMat)[1],0)
+        matrixLog[j,"goodConvReads"]<-ifelse(!is.null(dim(methMat)[1]),
+                                             dim(methMat)[1],0)
 
         if (is.null(dim(methMat))) {
           next
@@ -581,11 +591,14 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
         # count reads that do not cover at least 1-maxNAfraction of the cytosines
         matrixLog[j,"fewNAreads"]<-sum(rowMeans(is.na(methMat))<maxNAfraction)
         print(i)
-        matName<-paste0(path,"/rds/methMats_",regionType,"/",currentSample,"_",regionGR$ID,".rds")
+        matName<-paste0(path,"/rds/methMats_", regionType,"/", currentSample,
+                        "_", regionGR$ID, ".rds")
         saveRDS(methMat,file=matName)
         matrixLog[j,"filename"]<-matName
         # write intermediate data to file so that if it crashes one can restart
-        utils::write.csv(matrixLog,paste0(path,"/csv/MatrixLog_",regionType,".csv"), quote=F, row.names=F)
+        utils::write.csv(matrixLog,paste0(path,"/csv/MatrixLog_",regionType,
+                                          addSampleName, ".csv"),
+                         quote=F, row.names=F)
       }
     }
     if (convRatePlots==TRUE) {
@@ -593,7 +606,8 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
     }
   }
   # overwrite file with final data
-  utils::write.csv(matrixLog,paste0(path,"/csv/MatrixLog_",regionType,".csv"), quote=F, row.names=F)
+  utils::write.csv(matrixLog,paste0(path,"/csv/MatrixLog_",regionType,
+                            addSampleName,".csv"), quote=F, row.names=F)
   return(matrixLog)
 }
 

@@ -1,0 +1,11 @@
+"filename","sample","region","reads","motifs"
+"./rds/relCoord_ampTSS/dS02-182_WBGene00015947.rds","dS02-182","WBGene00015947",1690,25
+"./rds/relCoord_ampTSS/dS02-182_WBGene00015955.rds","dS02-182","WBGene00015955",10677,36
+"./rds/relCoord_ampTSS/dS02-182_WBGene00009620.rds","dS02-182","WBGene00009620",3416,26
+"./rds/relCoord_ampTSS/dS02-182_WBGene00009621.rds","dS02-182","WBGene00009621",31,25
+"./rds/relCoord_ampTSS/dS02-182_WBGene00009801.rds","dS02-182","WBGene00009801",1177,21
+"./rds/relCoord_ampTSS/dS03-N2_WBGene00015947.rds","dS03-N2","WBGene00015947",742,25
+"./rds/relCoord_ampTSS/dS03-N2_WBGene00015955.rds","dS03-N2","WBGene00015955",10520,37
+"./rds/relCoord_ampTSS/dS03-N2_WBGene00009620.rds","dS03-N2","WBGene00009620",1275,27
+"./rds/relCoord_ampTSS/dS03-N2_WBGene00009621.rds","dS03-N2","WBGene00009621",120,24
+"./rds/relCoord_ampTSS/dS03-N2_WBGene00009801.rds","dS03-N2","WBGene00009801",365,21

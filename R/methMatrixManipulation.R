@@ -65,8 +65,8 @@ getMatrices<-function(methMats,regionName=c(),sampleName=c()) {
   }
   s<-methMats$sample %in% sampleName
   r<-methMats$region %in% regionName
-  idx<-r*s
-  for (i in 1:nrow(methMats[idx,])) {
+
+  for (i in which(idx==1)) {
     mat<-readRDS(methMats$filename[i])
     newName<-paste0(methMats[idx,"sample"][i], "__", methMats[idx,"region"][i])
     newMats[newName]<-mat

@@ -10,6 +10,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(magrittr)
+library(methMatrix)
 ```
 
 ## Using bwa-meth for bisulfite sequence analysis
@@ -101,19 +102,20 @@ The initial matrices can be converted from absolute genomic coordinates to coord
 
 ```{r}
 # read in the table with the list of matrix files
-matTableFile<-system.file("extdata", "csv/MatrixLog_ampTSS.csv", package="methMatrix", mustWork=TRUE)
+matTableFile<-system.file("extdata", "csv/MatrixLog_ampTSS.csv",
+                          package="methMatrix", mustWork=TRUE)
 matTable<-read.csv(matTableFile,stringsAsFactors=F)
 
-# modify teh matTable path to data
+# modify the matTable path to data
 matTable$filename <-system.file("extdata", matTable[,"filename"], package="methMatrix", mustWork=TRUE)
-
 
 # read in one matrix
 i=2
 dataMatrix<-readRDS(matTable[i,"filename"])
 
 # read in the genomic ranges for TSSs
-tssFile<-system.file("extdata","genome/ampliconMaxTSSgr.RDS",package="methMatrix",mustWork=TRUE)
+tssFile<-system.file("extdata","genome/ampliconMaxTSSgr.RDS",
+                     package="methMatrix",mustWork=TRUE)
 tssWin<-readRDS(tssFile)
 names(mcols(tssWin))<-"ID"
 idx<-match(matTable$region,tssWin$ID)
@@ -123,11 +125,14 @@ tssWin<-tssWin[idx]
 regionType<-"TSS"
 winSize<-500
 
-matTableFile<-system.file("extdata", "csv/MatrixLog_relCoord_ampTSS.csv", package="methMatrix", mustWork=TRUE)
+matTableFile<-system.file("extdata", "csv/MatrixLog_relCoord_ampTSS.csv",
+                          package="methMatrix", mustWork=TRUE)
 matTable<-read.csv(matTableFile,stringsAsFactors=F)
 matTable$filename <-system.file("extdata", matTable[,"filename"], package="methMatrix", mustWork=TRUE)
 
-allSampleRelCoordMats<-getRelativeCoordMats(matList=matTable, regionGRs=tssWin, regionType=regionType, anchorCoord=winSize/2)
+allSampleRelCoordMats<-getRelativeCoordMats(matList=matTable, regionGRs=tssWin,
+                                            regionType=regionType, 
+                                            anchorCoord=winSize/2)
 
 TSSrelCoord<-convertGRtoRelCoord(tssWin,1,anchorPoint="middle")
 tssWinRelCoord<-convertGRtoRelCoord(tssWin,winSize,anchorPoint="middle")
@@ -136,7 +141,8 @@ minConversionRate=0.8
 maxNAfraction=0.2
 seqDate=""
 plotAllMatrices(allSampleRelCoordMats, samples, regionGRs=tssWinRelCoord,  
-                featureGRs=TSSrelCoord, featureLabel="TSS", regionType=regionType,
+                featureGRs=TSSrelCoord, featureLabel="TSS", 
+                regionType=regionType,
                 maxNAfraction=maxNAfraction, withAvr=FALSE,
                 includeInFileName=seqDate, drawArrow=FALSE)
 
