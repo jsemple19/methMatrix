@@ -4,7 +4,14 @@
 \alias{getReadMatrix}
 \title{Extract methylation matrix from alignment file}
 \usage{
-getReadMatrix(bamFile, genomeFile, bedFile, region)
+getReadMatrix(
+  bamFile,
+  genomeFile,
+  bedFile,
+  region,
+  samtoolsPath = "",
+  maxDepth = 10000
+)
 }
 \arguments{
 \item{bamFile}{String with path to bam file with alignments of reads to genome}
@@ -13,8 +20,12 @@ getReadMatrix(bamFile, genomeFile, bedFile, region)
 
 \item{bedFile}{String with path to .bed file with locations of Cs to be evaluated}
 
-\item{region}{Genomic range of region for which to extract reads. It can also be a string
-denoting the region, e.g. "X:8069396-8069886"}
+\item{region}{Genomic range of region for which to extract reads. It can also
+be a string denoting the region, e.g. "X:8069396-8069886"}
+
+\item{samtoolsPath}{Path to samtools executable (default="") if not in unix $PATH}
+
+\item{maxDepth}{Maximum number of reads to take for a given region (default=10,000)}
 }
 \value{
 A matrix with reads as row names and C positions as column names.

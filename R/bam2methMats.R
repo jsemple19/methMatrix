@@ -38,20 +38,25 @@ makeCGorGCbed<-function(genomeFile,CGorGC) {
 #' @param bamFile String with path to bam file with alignments of reads to genome
 #' @param genomeFile String with path to fasta file with genome sequence
 #' @param bedFile String with path to .bed file with locations of Cs to be evaluated
-#' @param region Genomic range of region for which to extract reads. It can also be a string
-#' denoting the region, e.g. "X:8069396-8069886"
+#' @param region Genomic range of region for which to extract reads. It can also
+#' be a string denoting the region, e.g. "X:8069396-8069886"
+#' @param samtoolsPath Path to samtools executable (default="") if not in unix $PATH
+#' @param maxDepth Maximum number of reads to take for a given region (default=10,000)
 #' @return A matrix with reads as row names and C positions as column names.
 #' Every position in matrix has a value of 0 (non-converted C = methylated), 1 (converted C (T) = not methylated) or NA (undetermined)
 #'
 #' @export
-getReadMatrix<-function(bamFile,genomeFile,bedFile,region) {
+getReadMatrix<-function(bamFile, genomeFile, bedFile, region, samtoolsPath="",
+                        maxDepth=10000) {
   if (class(region)=="GRanges") {
-    region<-paste0(GenomeInfoDb::seqnames(region),":",IRanges::start(region),"-",IRanges::end(region))
+    region<-paste0(GenomeInfoDb::seqnames(region), ":", IRanges::start(region),
+                   "-", IRanges::end(region))
   }
   # use samtools mpileup to call C methylation
-  tab<-system(paste0("samtools mpileup -f ",genomeFile," -l ",bedFile," -r ",region,
-                "  --output-QNAME --max-depth 10000 --min-BQ 8 ",
-                " --ff UNMAP,QCFAIL ",bamFile),intern=T)
+  tab<-system(paste0(samtoolsPath, "samtools mpileup -f ", genomeFile, " -l ",
+                     bedFile, " -r ", region,
+                "  --output-QNAME --max-depth ", maxDepth, " --min-BQ 8 ",
+                " --ff UNMAP,QCFAIL ", bamFile),intern=T)
   if (length(tab)>0) {
     # convert output to data frame
     tab<-lapply(tab,strsplit,"\t")
@@ -69,7 +74,8 @@ getReadMatrix<-function(bamFile,genomeFile,bedFile,region) {
       df<-pileupToConversionStatus(tab[line,])
       m1<-mat[df$reads,df$pos]
       m2<-df$Cconv
-      mat[df$reads,df$pos]<-ifelse(is.na(m1), ifelse(is.na(m2), NA, m2), ifelse(is.na(m2), m1, (m1 + m2)))
+      mat[df$reads,df$pos]<-ifelse(is.na(m1), ifelse(is.na(m2), NA, m2),
+                                   ifelse(is.na(m2), m1, (m1 + m2)))
     }
   } else {
     mat<-NULL
@@ -421,21 +427,23 @@ combineCGGCgr<-function(methFreqGR,samples) {
 #' @param genomeFile String with path to fasta file with genome sequence
 #' @param bedFileC String with path to .bed file with locations of Cs to be evaluated (for forward strand calls)
 #' @param bedFileG String with path to .bed file with locations of Gs to be evaluated (for reverse strand calls)
-#' @param regionGR Genomic range of region for which to extract reads. It can also be a string
-#' denoting the region, e.g. "X:8069396-8069886"
+#' @param regionGR Genomic range of region for which to extract reads. It can
+#' also be a string denoting the region, e.g. "X:8069396-8069886"
+#' @param samtoolsPath Path to samtools executable (default="") if not in unix $PATH
 #' @return A data frame with the names of the reads, the count of the number of informative Cs
-#' per region (not NAs), the maximum number of possible Cs in the regon, and the fraction of
-#' the informative Cs which have been bisulfite converted
+#' per region (not NAs), the maximum number of possible Cs in the regon, and
+#' the fraction of the informative Cs which have been bisulfite converted
 #' @export
-poorBisulfiteConversion<-function(bamFile,genomeFile,bedFileC,bedFileG,regionGR) {
+poorBisulfiteConversion<-function(bamFile,genomeFile,bedFileC,bedFileG,
+                                  regionGR,samtoolsPath="") {
   # calls on forward strand
-  matC<-getReadMatrix(bamFile,genomeFile,bedFileC,regionGR)
+  matC<-getReadMatrix(bamFile, genomeFile, bedFileC, regionGR, samtoolsPath)
   dfc<-data.frame(reads=row.names(matC),stringsAsFactors=F)
   dfc$informativeCs<-rowSums(!is.na(matC))
   dfc$totalCs<-dim(matC)[2]
   dfc$fractionConverted<-rowMeans(matC,na.rm=T)
   # calls on reverse strand
-  matG<-getReadMatrix(bamFile,genomeFile,bedFileG,regionGR)
+  matG<-getReadMatrix(bamFile, genomeFile, bedFileG, regionGR, samtoolsPath)
   dfg<-data.frame(reads=row.names(matG),stringsAsFactors=F)
   dfg$informativeCs<-rowSums(!is.na(matG))
   dfg$totalCs<-dim(matG)[2]
@@ -474,16 +482,10 @@ makeDirs<-function(path,dirNameList=c()) {
 
 #' Extract list of methylation matrices
 #'
-#' Input requires a sampleTable with two columns: FileName contains the path to a bam file of
-#' aligned sequences. SampleName contains the name of the sample. The function will return a
-#' list of all samples and for each sample a list of methylation matrices for all regions listed
-#' in regionGRs. The data structure is as follows:
-#' [1] sample1
-#'     [1] region1: matrix of reads x Cpositions
-#'     [2] region2: matrix of reads x Cpositions
-#' [2] sample2
-#'     [1] region1: matrix of reads x Cpositions
-#'     [2] region2: matrix of reads x Cpositions
+#' Input requires a sampleTable with two columns: FileName contains the path to
+#' a bam file of aligned sequences. SampleName contains the name of the sample.
+#' The function will return a table of all matrix-files for all samples and all
+#' regions listed in regionGRs, together with some info about the matrices.
 #' Matrices contain values between 0 (not methylated) and 1 (methylated), or NA (undefined)
 #' @param sampleTable Table with FileName column listing the full path to bam files belonging to the samples listed in the SampleName column
 #' @param genomeFile String with path to fasta file with genome sequence
@@ -496,12 +498,14 @@ makeDirs<-function(path,dirNameList=c()) {
 #' @param path Path for output. "plots", "csv" and "rds" directories will be created here. Default is current directory.
 #' @param convRatePlots Boolean value: should bisulfite conversion rate plots be created for each region? (default=FALSE)
 #' @param nThreads number of threads for parallelisation
+#' @param samtoolsPath Path to samtools executable (default="") if not in unix $PATH
 #' @return A list (by sample) of lists (by regions) of methylation matrices
 #' @export
 getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionType,
                                     genomeMotifGR, minConversionRate=0.8,
                                     maxNAfraction=0.2, bedFilePrefix=NULL,
-                                    path=".", convRatePlots=FALSE,nThreads=1) {
+                                    path=".", convRatePlots=FALSE,nThreads=1,
+                                    samtoolsPath="") {
   #create pathnames to bedfiles
   if (is.null(bedFilePrefix)){
     bedFilePrefix=gsub("\\.fa","", genomeFile)
@@ -538,8 +542,10 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
     for (i in seq_along(regionGRs)) {
       # get C conversion matrices
       regionGR<-regionGRs[i]
-      matCG<-getReadMatrix(bamFile,genomeFile,bedFileCG,regionGR)
-      matGC<-getReadMatrix(bamFile,genomeFile,bedFileGC,regionGR)
+      matCG<-getReadMatrix(bamFile, genomeFile, bedFileCG, regionGR,
+                           samtoolsPath)
+      matGC<-getReadMatrix(bamFile, genomeFile, bedFileGC, regionGR,
+                           samtoolsPath)
       convMat<-combineCGandGCmatrices(matCG,matGC,regionGR,genomeMotifGR)
       if(! is.null(dim(convMat))) {
         # combine CG and GC matrices and change conversion=1 to methylation=1
@@ -557,7 +563,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
 
         # get bisulfite conversion stats for Cs in non-methylated context
         df<-poorBisulfiteConversion(bamFile, genomeFile, bedFileC, bedFileG,
-                                    regionGR)
+                                    regionGR, samtoolsPath)
         removeReads<-df[df$fractionConverted<minConversionRate,"reads"]
         methMat<-methMat[!(rownames(methMat) %in% removeReads),]
         matrixLog[j,"goodConvReads"]<-ifelse(!is.null(dim(methMat)[1]),
@@ -568,24 +574,31 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
         }
         if (convRatePlots==TRUE) {
         ## plot histogram of number informative Cs per read
-          p<-ggplot2::ggplot(df,ggplot2::aes(x=informativeCs/totalCs)) + ggplot2::geom_histogram() +
+          p<-ggplot2::ggplot(df,ggplot2::aes(x=informativeCs/totalCs)) +
+            ggplot2::geom_histogram() +
             ggplot2::ggtitle(paste0(regionGR$ID,
-                                    " Informative Cs per read (totalCs: ",df$totalCs[1]," )"))
+                                    " Informative Cs per read (totalCs: ",
+                                    df$totalCs[1]," )"))
           # save to file
           plotName<-paste0(path,"/plots/informativeCsPlots/infC_",regionType,"_",
                            currentSample,"_",regionGR$ID,".pdf")
-          ggplot2::ggsave(plotName, plot=p, device="pdf", width=7.25, height=5, units="cm")
+          ggplot2::ggsave(plotName, plot=p, device="pdf", width=7.25, height=5,
+                          units="cm")
           informativeCsPlots<-c(informativeCsPlots,plotName)
-          ## plot histogram of number of bisulfite converted Cs per read as fraction of informative Cs
-         p<-ggplot2::ggplot(df,ggplot2::aes(x=fractionConverted)) + ggplot2::geom_histogram() +
+          ## plot histogram of number of bisulfite converted Cs per read as
+          ## fraction of informative Cs
+         p<-ggplot2::ggplot(df,ggplot2::aes(x=fractionConverted)) +
+            ggplot2::geom_histogram() +
             ggplot2::xlim(c(0,1)) +
             ggplot2::ggtitle(paste0(regionGR$ID,
-                                  " Bisulfite converted Cs per read out of informative Cs"))+
-            ggplot2::geom_vline(xintercept=minConversionRate,col="red",linetype="dashed")
+                    " Bisulfite converted Cs per read out of informative Cs")) +
+            ggplot2::geom_vline(xintercept=minConversionRate, col="red",
+                                linetype="dashed")
           # save to file
-          plotName<-paste0(path,"/plots/conversionRatePlots/convR_",regionType,"_",
-                           currentSample,"_",regionGR$ID,".pdf")
-          ggplot2::ggsave(plotName, plot=p, device="pdf", width=7.25, height=5, units="cm")
+          plotName<-paste0(path,"/plots/conversionRatePlots/convR_", regionType,
+                           "_", currentSample,"_",regionGR$ID,".pdf")
+          ggplot2::ggsave(plotName, plot=p, device="pdf", width=7.25, height=5,
+                          units="cm")
           conversionRatePlots<-c(conversionRatePlots,plotName)
         }
         # count reads that do not cover at least 1-maxNAfraction of the cytosines
@@ -596,7 +609,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
         saveRDS(methMat,file=matName)
         matrixLog[j,"filename"]<-matName
         # write intermediate data to file so that if it crashes one can restart
-        utils::write.csv(matrixLog,paste0(path,"/csv/MatrixLog_",regionType,
+        utils::write.csv(matrixLog,paste0(path, "/csv/MatrixLog_", regionType,
                                           addSampleName, ".csv"),
                          quote=F, row.names=F)
       }
@@ -606,8 +619,8 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
     }
   }
   # overwrite file with final data
-  utils::write.csv(matrixLog,paste0(path,"/csv/MatrixLog_",regionType,
-                            addSampleName,".csv"), quote=F, row.names=F)
+  utils::write.csv(matrixLog,paste0(path, "/csv/MatrixLog_", regionType,
+                            addSampleName, ".csv"), quote=F, row.names=F)
   return(matrixLog)
 }
 
@@ -629,7 +642,7 @@ getMatrixLog<-function(matrixLogFile, samples, regionGRs){
   } else {
     #log table to record number of reads in matrix at various steps
     matrixLog<-data.frame(filename=NA,sample=rep(samples,each=length(regionGRs)),
-                          region=rep(regionGRs$ID,length(samples)),
+                          region=rep(regionGRs$ID, length(samples)),
                           numCGpos=NA, numGCpos=NA, numUniquePos=NA,
                           CGreads=NA, GCreads=NA, methMatReads=NA,
                           goodConvReads=NA, fewNAreads=NA,stringsAsFactors=F)

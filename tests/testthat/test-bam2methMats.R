@@ -1,12 +1,39 @@
 context("Convert bam files to methylation matrices")
 
 
-testthat::test_that("getting mpileup from bam works", {
-  bamfile<-system.file("extdata", "aln/dS03-N2_20181119.noOL.bam",
-                       package="methMatrix", mustWork=TRUE)
-  genomefile<-system.file("extdata", "c_elegans.PRJNA13758.WS250.genomic_Xchr.fa",
-                          package="methMatrix", mustWork=TRUE)
-  bedfile<-system.file("extdata", "c_elegans.PRJNA13758.WS250.genomic_Xchr.CG.bed",
-                       package="methMatrix", mustWork=TRUE)
-  testthat::expect_equal()
+testthat::test_that("getReadMatrix from bam works", {
+  bamFile<-"./inst/extData/aln/dS03-N2_20181119.noOL.bam"
+  genomeFile<-"./inst/extData/genome/c_elegans.PRJNA13758.WS250.genomic_Xchr.fa"
+  bedFile<-"./inst/extData/genome/c_elegans.PRJNA13758.WS250.genomic_Xchr.CG.bed"
+  amplicons<-readRDS(system.file("extdata", "genome/ampliconGR.RDS",
+                         package="methMatrix", mustWork=TRUE))
+  seqlevels(amplicons)<-gsub("chr","",seqlevels(amplicons))
+  methMat<-getReadMatrix(bamFile, genomeFile, bedFile, amplicons[1],
+                samtoolsPath="/Applications/anaconda3/bin/")
+  testthat::expect_equal(dim(methMat),c(742,38))
+})
+
+
+
+testthat::test_that("getSingleMoleculeMatrices  works", {
+  genomeFile<-"./inst/extData/genome/c_elegans.PRJNA13758.WS250.genomic_Xchr.fa"
+  amplicons<-readRDS(system.file("extdata", "genome/ampliconGR.RDS",
+                                 package="methMatrix", mustWork=TRUE))
+  names(mcols(amplicons))<-"ID"
+  seqlevels(amplicons)<-gsub("chr","",seqlevels(amplicons))
+  genomeMotifGR<-readRDS(system.file("extdata",
+              "genome/c_elegans.PRJNA13758.WS250.genomic_Xchr.CGGC_motifs.RDS",
+                      package="methMatrix", mustWork=TRUE))
+  # read in the table with the list of matrix files
+  sampleTableFile<-system.file("extdata", "txt/bwameth_Aligned.txt",
+                            package="methMatrix", mustWork=TRUE)
+  sampleTable<-read.delim(sampleTableFile, stringsAsFactors=F)
+  sampleTable$FileName<-gsub("^\\.","\\./inst/extData",sampleTable$FileName)
+  #matTable$filename <-system.file("extdata", matTable[,"filename"],
+  #package="methMatrix", mustWork=TRUE)
+
+  matTable<-getSingleMoleculeMatrices(sampleTable, genomeFile, amplicons[c(1,10:12)],
+                            "amp", genomeMotifGR, path="./inst/extData",
+                            samtoolsPath="/Applications/anaconda3/bin/")
+  testthat::expect_equal(matTable$fewNAreads,c(502,NA,1075,93,275))
 })

@@ -68,8 +68,8 @@ Note that getting a unique, non-overlapping list of CG and GC motifs requires so
 Use the **getReadMatrix** to extract methylation status in each read for a specific motif. Each motif is performed separately. The matrices will contain reads as rows and C positions as columns. 
 
 ```{r}
-matCG<-methMatrix::getReadMatrix(bamFile=bamFile,genomeFile=genomeFile,bedFile=bedFileCG,region=regionGR)
-matGC<-methMatrix::getReadMatrix(bamFile,genomeFile,bedFileGC,regionGR)
+matCG<-getReadMatrix(bamFile=bamFile,genomeFile=genomeFile,bedFile=bedFileCG,region=regionGR)
+matGC<-getReadMatrix(bamFile,genomeFile,bedFileGC,regionGR)
 
 matCG[2:5,18:26]
 matGC[2:5,8:16]
@@ -88,7 +88,7 @@ This are very sparse matrices because forward and reverse reads will have C call
 The output of the **combineCGandGCmatrices** function is a single matrix with reads as rows and C positions within unique, non-overlapping CG, GC or GCGorCGC motifs as columns. The matrix contains values between 0 (non methylated) and 1 (methylated), as well as NAs for positions without a methylation call.
 
 ```{r}
-methMat<-methMatrix::combineCGandGCmatrices(matCG,matGC,regionGR,genomeMotifGR)
+methMat<-combineCGandGCmatrices(matCG,matGC,regionGR,genomeMotifGR)
 methMat[2:5,10:18]
 colSums(methMat,na.rm=T)
 

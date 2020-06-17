@@ -4,7 +4,14 @@
 \alias{poorBisulfiteConversion}
 \title{Find bisulfite conversion rate of Cs in non-methylated context}
 \usage{
-poorBisulfiteConversion(bamFile, genomeFile, bedFileC, bedFileG, regionGR)
+poorBisulfiteConversion(
+  bamFile,
+  genomeFile,
+  bedFileC,
+  bedFileG,
+  regionGR,
+  samtoolsPath = ""
+)
 }
 \arguments{
 \item{bamFile}{String with path to bam file with alignments of reads to genome}
@@ -15,13 +22,15 @@ poorBisulfiteConversion(bamFile, genomeFile, bedFileC, bedFileG, regionGR)
 
 \item{bedFileG}{String with path to .bed file with locations of Gs to be evaluated (for reverse strand calls)}
 
-\item{regionGR}{Genomic range of region for which to extract reads. It can also be a string
-denoting the region, e.g. "X:8069396-8069886"}
+\item{regionGR}{Genomic range of region for which to extract reads. It can
+also be a string denoting the region, e.g. "X:8069396-8069886"}
+
+\item{samtoolsPath}{Path to samtools executable (default="") if not in unix $PATH}
 }
 \value{
 A data frame with the names of the reads, the count of the number of informative Cs
-per region (not NAs), the maximum number of possible Cs in the regon, and the fraction of
-the informative Cs which have been bisulfite converted
+per region (not NAs), the maximum number of possible Cs in the regon, and
+the fraction of the informative Cs which have been bisulfite converted
 }
 \description{
 Use bedfile with positons of Cs that are in non-methylated context to obtain stats
