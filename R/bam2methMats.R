@@ -616,8 +616,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
           }
           # count reads that do not cover at least 1-maxNAfraction of the cytosines
           matrixLog[j,"fewNAreads"]<-sum(rowMeans(is.na(methMat))<maxNAfraction)
-          print(i)
-          print(regionGR[i]$ID)
+          print(paste(i,regionType,currentSample,regionGR$ID,sep=" "))
           matName<-paste0(path,"/rds/methMats_", regionType,"/", currentSample,
                         "_", regionGR$ID, ".rds")
           saveRDS(methMat,file=matName)
