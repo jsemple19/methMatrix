@@ -499,13 +499,18 @@ makeDirs<-function(path,dirNameList=c()) {
 #' @param convRatePlots Boolean value: should bisulfite conversion rate plots be created for each region? (default=FALSE)
 #' @param nThreads number of threads for parallelisation
 #' @param samtoolsPath Path to samtools executable (default="") if not in unix $PATH
+#' @param overwriteMatrixLog Should matrixLog file be overwritten (in case of
+#'  change in analysis or data), or should already computed matrices be used and
+#'  script skips to next matrix (in case of premature termination of analysis)
+#'  (default=FALSE)
 #' @return A list (by sample) of lists (by regions) of methylation matrices
 #' @export
-getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionType,
-                                    genomeMotifGR, minConversionRate=0.8,
-                                    maxNAfraction=0.2, bedFilePrefix=NULL,
-                                    path=".", convRatePlots=FALSE,nThreads=1,
-                                    samtoolsPath="") {
+getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
+                                    regionType, genomeMotifGR,
+                                    minConversionRate=0.8, maxNAfraction=0.2,
+                                    bedFilePrefix=NULL, path=".",
+                                    convRatePlots=FALSE,nThreads=1,
+                                    samtoolsPath="",overwriteMatrixLog=FALSE) {
   totalCs<-informativeCs<-fractionConverted<-NULL
   #create pathnames to bedfiles
   if (is.null(bedFilePrefix)){
@@ -541,78 +546,88 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
     #doParallel::registerDoParallel(clst)
 
     for (i in seq_along(regionGRs)) {
-      # get C conversion matrices
-      regionGR<-regionGRs[i]
-      matCG<-getReadMatrix(bamFile, genomeFile, bedFileCG, regionGR,
-                           samtoolsPath)
-      matGC<-getReadMatrix(bamFile, genomeFile, bedFileGC, regionGR,
-                           samtoolsPath)
-      convMat<-combineCGandGCmatrices(matCG,matGC,regionGR,genomeMotifGR)
-      if(! is.null(dim(convMat))) {
-        # combine CG and GC matrices and change conversion=1 to methylation=1
-        methMat<-1-convMat
-        j<-which(matrixLog$sample==currentSample & matrixLog$region==regionGR$ID)
-        # record number of reads in the matrices
-        matrixLog[j,"numCGpos"]<-ifelse(!is.null(dim(matCG)[2]),dim(matCG)[2],0)
-        matrixLog[j,"numGCpos"]<-ifelse(!is.null(dim(matGC)[2]),dim(matGC)[2],0)
-        matrixLog[j,"numUniquePos"]<-ifelse(!is.null(dim(methMat)[2]),
-                                            dim(methMat)[2],0)
-        matrixLog[j,"CGreads"]<-ifelse(!is.null(dim(matCG)[1]), dim(matCG)[1],0)
-        matrixLog[j,"GCreads"]<-ifelse(!is.null(dim(matGC)[1]), dim(matGC)[1],0)
-        matrixLog[j,"methMatReads"]<-ifelse(!is.null(dim(methMat)[1]),
-                                            dim(methMat)[1],0)
+      # find appropriate line of matrixLog, and check if data already exists
+      j<-which(matrixLog$sample==currentSample & matrixLog$region==regionGR$ID)
 
-        # get bisulfite conversion stats for Cs in non-methylated context
-        df<-poorBisulfiteConversion(bamFile, genomeFile, bedFileC, bedFileG,
+      if(sum(is.na(matrixLog[j,]))>0){
+        # get C conversion matrices
+        regionGR<-regionGRs[i]
+        matCG<-getReadMatrix(bamFile, genomeFile, bedFileCG, regionGR,
+                           samtoolsPath)
+        matGC<-getReadMatrix(bamFile, genomeFile, bedFileGC, regionGR,
+                           samtoolsPath)
+        convMat<-combineCGandGCmatrices(matCG,matGC,regionGR,genomeMotifGR)
+        if(! is.null(dim(convMat))) {
+          # combine CG and GC matrices and change conversion=1 to methylation=1
+          methMat<-1-convMat
+          #j<-which(matrixLog$sample==currentSample & matrixLog$region==regionGR$ID)
+        # record number of reads in the matrices
+          matrixLog[j,"numCGpos"]<-ifelse(!is.null(dim(matCG)[2]), dim(matCG)[2]
+                                          ,0)
+          matrixLog[j,"numGCpos"]<-ifelse(!is.null(dim(matGC)[2]), dim(matGC)[2],
+                                        0)
+          matrixLog[j,"numUniquePos"]<-ifelse(!is.null(dim(methMat)[2]),
+                                            dim(methMat)[2], 0)
+          matrixLog[j,"CGreads"]<-ifelse(!is.null(dim(matCG)[1]), dim(matCG)[1],
+                                         0)
+          matrixLog[j,"GCreads"]<-ifelse(!is.null(dim(matGC)[1]), dim(matGC)[1],
+                                         0)
+          matrixLog[j,"methMatReads"]<-ifelse(!is.null(dim(methMat)[1]),
+                                            dim(methMat)[1] ,0)
+
+          # get bisulfite conversion stats for Cs in non-methylated context
+          df<-poorBisulfiteConversion(bamFile, genomeFile, bedFileC, bedFileG,
                                     regionGR, samtoolsPath)
-        removeReads<-df[df$fractionConverted<minConversionRate,"reads"]
-        methMat<-methMat[!(rownames(methMat) %in% removeReads),]
-        matrixLog[j,"goodConvReads"]<-ifelse(!is.null(dim(methMat)[1]),
+          removeReads<-df[df$fractionConverted<minConversionRate,"reads"]
+          methMat<-methMat[!(rownames(methMat) %in% removeReads),]
+          matrixLog[j,"goodConvReads"]<-ifelse(!is.null(dim(methMat)[1]),
                                              dim(methMat)[1],0)
 
-        if (is.null(dim(methMat))) {
-          next
-        }
-        if (convRatePlots==TRUE) {
-        ## plot histogram of number informative Cs per read
-          p<-ggplot2::ggplot(df,ggplot2::aes(x=informativeCs/totalCs)) +
-            ggplot2::geom_histogram() +
-            ggplot2::ggtitle(paste0(regionGR$ID,
+          if (is.null(dim(methMat))) {
+            next
+          }
+          if (convRatePlots==TRUE) {
+          ## plot histogram of number informative Cs per read
+            p<-ggplot2::ggplot(df,ggplot2::aes(x=informativeCs/totalCs)) +
+              ggplot2::geom_histogram() +
+              ggplot2::ggtitle(paste0(regionGR$ID,
                                     " Informative Cs per read (totalCs: ",
                                     df$totalCs[1]," )"))
-          # save to file
-          plotName<-paste0(path,"/plots/informativeCsPlots/infC_",regionType,"_",
-                           currentSample,"_",regionGR$ID,".pdf")
-          ggplot2::ggsave(plotName, plot=p, device="pdf", width=7.25, height=5,
+            # save to file
+            plotName<-paste0(path,"/plots/informativeCsPlots/infC_", regionType,
+                             "_", currentSample,"_", regionGR$ID, ".pdf")
+            ggplot2::ggsave(plotName, plot=p, device="pdf", width=7.25, height=5,
                           units="cm")
-          informativeCsPlots<-c(informativeCsPlots,plotName)
-          ## plot histogram of number of bisulfite converted Cs per read as
-          ## fraction of informative Cs
-         p<-ggplot2::ggplot(df,ggplot2::aes(x=fractionConverted)) +
-            ggplot2::geom_histogram() +
-            ggplot2::xlim(c(0,1)) +
-            ggplot2::ggtitle(paste0(regionGR$ID,
+            informativeCsPlots<-c(informativeCsPlots,plotName)
+            ## plot histogram of number of bisulfite converted Cs per read as
+            ## fraction of informative Cs
+            p<-ggplot2::ggplot(df,ggplot2::aes(x=fractionConverted)) +
+              ggplot2::geom_histogram() +
+              ggplot2::xlim(c(0,1)) +
+              ggplot2::ggtitle(paste0(regionGR$ID,
                     " Bisulfite converted Cs per read out of informative Cs")) +
-            ggplot2::geom_vline(xintercept=minConversionRate, col="red",
+              ggplot2::geom_vline(xintercept=minConversionRate, col="red",
                                 linetype="dashed")
-          # save to file
-          plotName<-paste0(path,"/plots/conversionRatePlots/convR_", regionType,
-                           "_", currentSample,"_",regionGR$ID,".pdf")
-          ggplot2::ggsave(plotName, plot=p, device="pdf", width=7.25, height=5,
+            # save to file
+            plotName<-paste0(path,"/plots/conversionRatePlots/convR_",
+                             regionType, "_", currentSample,"_",regionGR$ID,"
+                             .pdf")
+            ggplot2::ggsave(plotName, plot=p, device="pdf", width=7.25, height=5,
                           units="cm")
-          conversionRatePlots<-c(conversionRatePlots,plotName)
-        }
-        # count reads that do not cover at least 1-maxNAfraction of the cytosines
-        matrixLog[j,"fewNAreads"]<-sum(rowMeans(is.na(methMat))<maxNAfraction)
-        print(i)
-        matName<-paste0(path,"/rds/methMats_", regionType,"/", currentSample,
+            conversionRatePlots<-c(conversionRatePlots,plotName)
+          }
+          # count reads that do not cover at least 1-maxNAfraction of the cytosines
+          matrixLog[j,"fewNAreads"]<-sum(rowMeans(is.na(methMat))<maxNAfraction)
+          print(i)
+          matName<-paste0(path,"/rds/methMats_", regionType,"/", currentSample,
                         "_", regionGR$ID, ".rds")
-        saveRDS(methMat,file=matName)
-        matrixLog[j,"filename"]<-matName
-        # write intermediate data to file so that if it crashes one can restart
-        utils::write.csv(matrixLog,paste0(path, "/csv/MatrixLog_", regionType,
+          saveRDS(methMat,file=matName)
+          matrixLog[j,"filename"]<-matName
+          # write intermediate data to file so that if it crashes one can restart
+          utils::write.csv(matrixLog,paste0(path, "/csv/MatrixLog_", regionType,
                                           addSampleName, ".csv"),
                          quote=F, row.names=F)
+        }
       }
     }
     if (convRatePlots==TRUE) {
