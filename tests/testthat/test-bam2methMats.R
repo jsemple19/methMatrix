@@ -7,7 +7,8 @@ testthat::test_that("getReadMatrix from bam works", {
   bedFile<-"./inst/extData/genome/c_elegans.PRJNA13758.WS250.genomic_Xchr.CG.bed"
   amplicons<-readRDS(system.file("extdata", "genome/ampliconGR.RDS",
                          package="methMatrix", mustWork=TRUE))
-  seqlevels(amplicons)<-gsub("chr","",seqlevels(amplicons))
+  GenomeInfoDb::seqlevels(amplicons)<-gsub("chr","",
+                                            GenomeInfoDb::seqlevels(amplicons))
   methMat<-getReadMatrix(bamFile, genomeFile, bedFile, amplicons[1],
                 samtoolsPath="/Applications/anaconda3/bin/")
   testthat::expect_equal(dim(methMat),c(742,38))
@@ -19,8 +20,9 @@ testthat::test_that("getSingleMoleculeMatrices  works", {
   genomeFile<-"./inst/extData/genome/c_elegans.PRJNA13758.WS250.genomic_Xchr.fa"
   amplicons<-readRDS(system.file("extdata", "genome/ampliconGR.RDS",
                                  package="methMatrix", mustWork=TRUE))
-  names(mcols(amplicons))<-"ID"
-  seqlevels(amplicons)<-gsub("chr","",seqlevels(amplicons))
+  names(GenomicRanges::mcols(amplicons))<-"ID"
+  GenomeInfoDb::seqlevels(amplicons)<-gsub("chr","",
+                                            GenomeInfoDb::seqlevels(amplicons))
   genomeMotifGR<-readRDS(system.file("extdata",
               "genome/c_elegans.PRJNA13758.WS250.genomic_Xchr.CGGC_motifs.RDS",
                       package="methMatrix", mustWork=TRUE))

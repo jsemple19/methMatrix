@@ -506,6 +506,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs, regionTy
                                     maxNAfraction=0.2, bedFilePrefix=NULL,
                                     path=".", convRatePlots=FALSE,nThreads=1,
                                     samtoolsPath="") {
+  totalCs<-informativeCs<-fractionConverted<-NULL
   #create pathnames to bedfiles
   if (is.null(bedFilePrefix)){
     bedFilePrefix=gsub("\\.fa","", genomeFile)

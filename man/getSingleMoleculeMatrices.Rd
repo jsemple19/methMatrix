@@ -48,15 +48,9 @@ getSingleMoleculeMatrices(
 A list (by sample) of lists (by regions) of methylation matrices
 }
 \description{
-Input requires a sampleTable with two columns: FileName contains the path to a bam file of
-aligned sequences. SampleName contains the name of the sample. The function will return a
-list of all samples and for each sample a list of methylation matrices for all regions listed
-in regionGRs. The data structure is as follows:
-[1] sample1
-    [1] region1: matrix of reads x Cpositions
-    [2] region2: matrix of reads x Cpositions
-[2] sample2
-    [1] region1: matrix of reads x Cpositions
-    [2] region2: matrix of reads x Cpositions
+Input requires a sampleTable with two columns: FileName contains the path to
+a bam file of aligned sequences. SampleName contains the name of the sample.
+The function will return a table of all matrix-files for all samples and all
+regions listed in regionGRs, together with some info about the matrices.
 Matrices contain values between 0 (not methylated) and 1 (methylated), or NA (undefined)
 }

@@ -54,6 +54,7 @@ library(ggpubr)
 #' #will return a single item list of a matrix for that gene in that sample.
 #' @export
 getMatrices<-function(methMats,regionName=c(),sampleName=c()) {
+  idx<-NULL
   # extracts a simple list of matrices. It is possible to also subset by regionName or sampleName
   # each matrix will have a name composed of sampleName__regionName
   newMats<-list()
@@ -65,7 +66,7 @@ getMatrices<-function(methMats,regionName=c(),sampleName=c()) {
   }
   s<-methMats$sample %in% sampleName
   r<-methMats$region %in% regionName
-
+  idx<-r*s
   for (i in which(idx==1)) {
     mat<-readRDS(methMats$filename[i])
     newName<-paste0(methMats[idx,"sample"][i], "__", methMats[idx,"region"][i])
@@ -160,6 +161,7 @@ changeAnchorCoord<-function(mat,anchorCoord=0) {
 #' @return A table of file paths to padded methylation matrices
 #' @export
 getFullMatrices<-function(matList,regionType,winSize=500, workDir=".") {
+  currentSample<-regionGR<-NULL
   naRows<-is.na(matList$filename)
   matList<-matList[!naRows,]
   makeDirs(workDir,paste0("rds/paddedMats_",regionType))
@@ -287,8 +289,9 @@ getMetaMethFreq<-function(matList,regionGRs,minReads=50) {
 #' @export
 plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs="",
                               myXlab="CpG/GpC position",
-                              featureLabel="TSS", drawArrow=TRUE, title=NULL, baseFontSize=12,
-                              maxNAfraction=0.2) {
+                              featureLabel="TSS", drawArrow=TRUE, title=NULL,
+                              baseFontSize=12, maxNAfraction=0.2) {
+  position<-methylation<-molecules<-NULL
   ### single molecule plot. mat is matrix containing methylation values at different postions
   # (columns) in individual reads (rows). regionName is the ID of the amplicon or genomic
   # region being plotted. regionGRs is a genomicRanges object containing the region being
@@ -388,8 +391,11 @@ plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs="",
 #' @return A ggplot2 plot object
 #' @export
 plotSingleMoleculesWithAvr<-function(mat, regionName, regionGRs, featureGRs,
-                                     myXlab="CpG/GpC position", featureLabel="TSS", drawArrow=TRUE,
-                                     title=NULL, baseFontSize=11, maxNAfraction=0.2) {
+                                     myXlab="CpG/GpC position",
+                                     featureLabel="TSS", drawArrow=TRUE,
+                                     title=NULL, baseFontSize=11,
+                                     maxNAfraction=0.2) {
+  dSMF<-molecules<-NULL
   # remove reads with more than maxNAfraction positions with NAs
   tooManyNAs<-rowMeans(is.na(mat))>maxNAfraction
   mat<-mat[!tooManyNAs,]
@@ -662,6 +668,7 @@ getAllSampleMetaMethFreq<-function(relCoordMats,samples,regionGRs,minReads=10) {
 #' @return A ggplot2 plot object
 #' @export
 plotDSMFmetageneDF<-function(metageneDF,maxPoints=10000) {
+  position<-methFreq<-NULL
   # subsample if too many points
   if (nrow(metageneDF)>maxPoints) {
     set.seed(1)

@@ -22,7 +22,8 @@ Imports: GenomicRanges,
           data.table,
           grangesutils,
           gridExtra,
-          Biostrings
+          Biostrings,
+          magrittr
 Suggests: 
     knitr,
     rmarkdown,
