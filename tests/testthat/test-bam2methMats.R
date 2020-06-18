@@ -38,6 +38,6 @@ testthat::test_that("getSingleMoleculeMatrices  works", {
                                       amplicons[c(1,10:12)],
                             "amp", genomeMotifGR, path="./inst/extData",
                             samtoolsPath="/Applications/anaconda3/bin/")
-  testthat::expect_equal(matTable$fewNAreads,c(502,NA,1075,93,275))
+  testthat::expect_equal(matTable$fewNAreads,c(502,1075,93,275))
 })
 

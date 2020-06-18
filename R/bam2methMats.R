@@ -549,7 +549,6 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
       # find appropriate line of matrixLog, and check if data already exists
       regionGR<-regionGRs[i]
       j<-which(matrixLog$sample==currentSample & matrixLog$region==regionGR$ID)
-      print(matrixLog[j,])
       if(sum(is.na(matrixLog[j,]))>0 | overwriteMatrixLog==T){
         # get C conversion matrices
         matCG<-getReadMatrix(bamFile, genomeFile, bedFileCG, regionGR,
@@ -560,7 +559,6 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
         if(! is.null(dim(convMat))) {
           # combine CG and GC matrices and change conversion=1 to methylation=1
           methMat<-1-convMat
-          #j<-which(matrixLog$sample==currentSample & matrixLog$region==regionGR$ID)
           # record number of reads in the matrices
           matrixLog[j,"numCGpos"]<-ifelse(!is.null(dim(matCG)[2]),
                                           dim(matCG)[2], 0)
@@ -619,6 +617,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
           # count reads that do not cover at least 1-maxNAfraction of the cytosines
           matrixLog[j,"fewNAreads"]<-sum(rowMeans(is.na(methMat))<maxNAfraction)
           print(i)
+          print(regionGR[i]$ID)
           matName<-paste0(path,"/rds/methMats_", regionType,"/", currentSample,
                         "_", regionGR$ID, ".rds")
           saveRDS(methMat,file=matName)
