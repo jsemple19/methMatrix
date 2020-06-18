@@ -547,11 +547,11 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
 
     for (i in seq_along(regionGRs)) {
       # find appropriate line of matrixLog, and check if data already exists
+      regionGR<-regionGRs[i]
       j<-which(matrixLog$sample==currentSample & matrixLog$region==regionGR$ID)
-
-      if(sum(is.na(matrixLog[j,]))>0){
+      print(matrixLog[j,])
+      if(sum(is.na(matrixLog[j,]))>0 | overwriteMatrixLog==T){
         # get C conversion matrices
-        regionGR<-regionGRs[i]
         matCG<-getReadMatrix(bamFile, genomeFile, bedFileCG, regionGR,
                            samtoolsPath)
         matGC<-getReadMatrix(bamFile, genomeFile, bedFileGC, regionGR,
@@ -561,19 +561,19 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
           # combine CG and GC matrices and change conversion=1 to methylation=1
           methMat<-1-convMat
           #j<-which(matrixLog$sample==currentSample & matrixLog$region==regionGR$ID)
-        # record number of reads in the matrices
-          matrixLog[j,"numCGpos"]<-ifelse(!is.null(dim(matCG)[2]), dim(matCG)[2]
-                                          ,0)
-          matrixLog[j,"numGCpos"]<-ifelse(!is.null(dim(matGC)[2]), dim(matGC)[2],
-                                        0)
+          # record number of reads in the matrices
+          matrixLog[j,"numCGpos"]<-ifelse(!is.null(dim(matCG)[2]),
+                                          dim(matCG)[2], 0)
+          matrixLog[j,"numGCpos"]<-ifelse(!is.null(dim(matGC)[2]),
+                                          dim(matGC)[2], 0)
           matrixLog[j,"numUniquePos"]<-ifelse(!is.null(dim(methMat)[2]),
                                             dim(methMat)[2], 0)
-          matrixLog[j,"CGreads"]<-ifelse(!is.null(dim(matCG)[1]), dim(matCG)[1],
-                                         0)
-          matrixLog[j,"GCreads"]<-ifelse(!is.null(dim(matGC)[1]), dim(matGC)[1],
-                                         0)
+          matrixLog[j,"CGreads"]<-ifelse(!is.null(dim(matCG)[1]),
+                                         dim(matCG)[1], 0)
+          matrixLog[j,"GCreads"]<-ifelse(!is.null(dim(matGC)[1]),
+                                         dim(matGC)[1], 0)
           matrixLog[j,"methMatReads"]<-ifelse(!is.null(dim(methMat)[1]),
-                                            dim(methMat)[1] ,0)
+                                            dim(methMat)[1], 0)
 
           # get bisulfite conversion stats for Cs in non-methylated context
           df<-poorBisulfiteConversion(bamFile, genomeFile, bedFileC, bedFileG,

@@ -34,8 +34,10 @@ testthat::test_that("getSingleMoleculeMatrices  works", {
   #matTable$filename <-system.file("extdata", matTable[,"filename"],
   #package="methMatrix", mustWork=TRUE)
 
-  matTable<-getSingleMoleculeMatrices(sampleTable, genomeFile, amplicons[c(1,10:12)],
+  matTable<-getSingleMoleculeMatrices(sampleTable, genomeFile,
+                                      amplicons[c(1,10:12)],
                             "amp", genomeMotifGR, path="./inst/extData",
                             samtoolsPath="/Applications/anaconda3/bin/")
   testthat::expect_equal(matTable$fewNAreads,c(502,NA,1075,93,275))
 })
+

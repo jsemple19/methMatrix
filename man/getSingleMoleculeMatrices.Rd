@@ -16,7 +16,8 @@ getSingleMoleculeMatrices(
   path = ".",
   convRatePlots = FALSE,
   nThreads = 1,
-  samtoolsPath = ""
+  samtoolsPath = "",
+  overwriteMatrixLog = FALSE
 )
 }
 \arguments{
@@ -43,6 +44,11 @@ getSingleMoleculeMatrices(
 \item{nThreads}{number of threads for parallelisation}
 
 \item{samtoolsPath}{Path to samtools executable (default="") if not in unix $PATH}
+
+\item{overwriteMatrixLog}{Should matrixLog file be overwritten (in case of
+change in analysis or data), or should already computed matrices be used and
+script skips to next matrix (in case of premature termination of analysis)
+(default=FALSE)}
 }
 \value{
 A list (by sample) of lists (by regions) of methylation matrices
