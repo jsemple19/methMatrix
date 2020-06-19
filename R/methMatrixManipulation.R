@@ -70,7 +70,7 @@ getMatrices<-function(methMats,regionName=c(),sampleName=c()) {
   for (i in which(idx==1)) {
     mat<-readRDS(methMats$filename[i])
     newName<-paste0(methMats[idx,"sample"][i], "__", methMats[idx,"region"][i])
-    newMats[newName]<-mat
+    newMats[[newName]]<-mat
   }
   return(newMats)
 }
@@ -189,8 +189,8 @@ getFullMatrices<-function(matList,regionType,winSize=500, workDir=".") {
 #' Convert C position numbering from genomic to relative coordinates for a list of matrices
 #'
 #' @param matList A table of paths to methylation matrices with names that match the regionGRs object
-#' @param regionGRs A genomicRanges object of the regions relative to which the new coordinates are caclulated
-#' with a metadata column called "ID" containing names that match the methylation matrices in matList
+#' @param regionGRs A genomicRanges object of the regions relative to which the new coordinates are caclulated with a metadata column called "ID" containing names that match the methylation matrices in matList
+#' @param regionType A collective name for this list of regions (e.g TSS or amplicons). It will be used in naming the output directories.
 #' @param anchorCoord  The coordinate which will be set as the 0 position for relative
 #' coordinates (default=0)
 #' @param workDir path to working directory
@@ -395,7 +395,7 @@ plotSingleMoleculesWithAvr<-function(mat, regionName, regionGRs, featureGRs,
                                      featureLabel="TSS", drawArrow=TRUE,
                                      title=NULL, baseFontSize=11,
                                      maxNAfraction=0.2) {
-  dSMF<-molecules<-NULL
+  dSMF<-molecules<-position<-methylation<-NULL
   # remove reads with more than maxNAfraction positions with NAs
   tooManyNAs<-rowMeans(is.na(mat))>maxNAfraction
   mat<-mat[!tooManyNAs,]

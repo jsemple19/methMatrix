@@ -15,8 +15,9 @@ getRelativeCoordMats(
 \arguments{
 \item{matList}{A table of paths to methylation matrices with names that match the regionGRs object}
 
-\item{regionGRs}{A genomicRanges object of the regions relative to which the new coordinates are caclulated
-with a metadata column called "ID" containing names that match the methylation matrices in matList}
+\item{regionGRs}{A genomicRanges object of the regions relative to which the new coordinates are caclulated with a metadata column called "ID" containing names that match the methylation matrices in matList}
+
+\item{regionType}{A collective name for this list of regions (e.g TSS or amplicons). It will be used in naming the output directories.}
 
 \item{anchorCoord}{The coordinate which will be set as the 0 position for relative
 coordinates (default=0)}

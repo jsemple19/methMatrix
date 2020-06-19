@@ -511,7 +511,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
                                     bedFilePrefix=NULL, path=".",
                                     convRatePlots=FALSE,nThreads=1,
                                     samtoolsPath="",overwriteMatrixLog=FALSE) {
-  totalCs<-informativeCs<-fractionConverted<-NULL
+  totalCs<-informativeCs<-fractionConverted<-i<-NULL
   #create pathnames to bedfiles
   if (is.null(bedFilePrefix)){
     bedFilePrefix=gsub("\\.fa","", genomeFile)
@@ -542,10 +542,13 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
       informativeCsPlots=vector()
       conversionRatePlots=vector()
     }
-    #clst<-parallel::makeCluster(nThreads)
-    #doParallel::registerDoParallel(clst)
-
-    for (i in seq_along(regionGRs)) {
+    clst<-parallel::makeCluster(nThreads)
+    doParallel::registerDoParallel(clst)
+    pmatrixLog<-foreach::foreach(i=1:length(regionGRs),
+                                 .combine=rbind,
+                                 .packages=c("GenomicRanges",
+                                             "S4Vectors")) %dopar% {
+    #for (i in seq_along(regionGRs)) {
       # find appropriate line of matrixLog, and check if data already exists
       regionGR<-regionGRs[i]
       j<-which(matrixLog$sample==currentSample & matrixLog$region==regionGR$ID)
@@ -627,15 +630,18 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
                          quote=F, row.names=F)
         }
       }
+      print(matrixLog[j,])
+      matrixLog[j,]
     }
+    print(pmatrixLog)
     if (convRatePlots==TRUE) {
       #TODO:combine PDF function
     }
   }
   # overwrite file with final data
-  utils::write.csv(matrixLog,paste0(path, "/csv/MatrixLog_", regionType,
-                            addSampleName, ".csv"), quote=F, row.names=F)
-  return(matrixLog)
+  #utils::write.csv(matrixLog,paste0(path, "/csv/MatrixLog_", regionType,
+  #                          addSampleName, ".csv"), quote=F, row.names=F)
+  return(pmatrixLog)
 }
 
 

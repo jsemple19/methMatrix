@@ -11,7 +11,7 @@ testthat::test_that("getRelativeCoord orders columns correctly", {
   relMat<-getRelativeCoord(dataMatrix, regionGR,
                            invert=ifelse(GenomicRanges::strand(regionGR)=="+",
                                          F, T))
-  testthat::expect_equal(colnames(relMat),c(100,200,350,450))
+  testthat::expect_equal(as.numeric(colnames(relMat)),c(20,100,350,450))
 })
 
 
@@ -34,8 +34,7 @@ testthat::test_that("getMatrices subsets the matrix table correctly", {
   matTable<-rbind(matTable,matTable_dS03N2)
 
   # read in the genomic ranges for TSSs
-  tssFile<-system.file("extdata","genome/ampliconMaxTSSgr.RDS",package="methMatrix",
-                       mustWork=TRUE)
+  tssFile<-"./inst/extData/genome/ampliconMaxTSSgr.RDS"
   tssWin<-readRDS(tssFile)
   names(GenomicRanges::mcols(tssWin))<-"ID"
   idx<-match(matTable$region,tssWin$ID)
