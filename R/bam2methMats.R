@@ -509,8 +509,8 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
                                     regionType, genomeMotifGR,
                                     minConversionRate=0.8, maxNAfraction=0.2,
                                     bedFilePrefix=NULL, path=".",
-                                    convRatePlots=FALSE,nThreads=1,
-                                    samtoolsPath="",overwriteMatrixLog=FALSE) {
+                                    convRatePlots=FALSE, nThreads=1,
+                                    samtoolsPath="", overwriteMatrixLog=FALSE) {
   totalCs<-informativeCs<-fractionConverted<-i<-NULL
   #create pathnames to bedfiles
   if (is.null(bedFilePrefix)){
@@ -532,7 +532,9 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
   addSampleName<-ifelse(length(unique(samples))==1,paste0("_",samples[1]),"")
 
   matrixLog<-getMatrixLog(paste0(path,"/csv/MatrixLog_",regionType,
-                                 addSampleName,".csv"), samples, regionGRs)
+                                 addSampleName,"_log.csv"))
+
+  #print(matrixLog)
 
   for (currentSample in samples) {
     print(currentSample)
@@ -551,8 +553,15 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
     #for (i in seq_along(regionGRs)) {
       # find appropriate line of matrixLog, and check if data already exists
       regionGR<-regionGRs[i]
-      j<-which(matrixLog$sample==currentSample & matrixLog$region==regionGR$ID)
-      if(sum(is.na(matrixLog[j,]))>0 | overwriteMatrixLog==T){
+      logLine<-data.frame(regionNum=i,filename=NA,sample=currentSample,
+                          region=regionGR$ID, numCGpos=NA, numGCpos=NA,
+                          numUniquePos=NA, CGreads=NA, GCreads=NA,
+                          methMatReads=NA, goodConvReads=NA,
+                          fewNAreads=NA,stringsAsFactors=F)
+      alreadyDone<-(currentSample %in% matrixLog$sample &
+                      regionGR$ID %in% matrixLog$region)
+      #j<-which(matrixLog$sample==currentSample & matrixLog$region==regionGR$ID)
+      if(!alreadyDone | overwriteMatrixLog==T){
         # get C conversion matrices
         matCG<-getReadMatrix(bamFile, genomeFile, bedFileCG, regionGR,
                            samtoolsPath)
@@ -563,17 +572,17 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
           # combine CG and GC matrices and change conversion=1 to methylation=1
           methMat<-1-convMat
           # record number of reads in the matrices
-          matrixLog[j,"numCGpos"]<-ifelse(!is.null(dim(matCG)[2]),
+          logLine[1,"numCGpos"]<-ifelse(!is.null(dim(matCG)[2]),
                                           dim(matCG)[2], 0)
-          matrixLog[j,"numGCpos"]<-ifelse(!is.null(dim(matGC)[2]),
+          logLine[1,"numGCpos"]<-ifelse(!is.null(dim(matGC)[2]),
                                           dim(matGC)[2], 0)
-          matrixLog[j,"numUniquePos"]<-ifelse(!is.null(dim(methMat)[2]),
+          logLine[1,"numUniquePos"]<-ifelse(!is.null(dim(methMat)[2]),
                                             dim(methMat)[2], 0)
-          matrixLog[j,"CGreads"]<-ifelse(!is.null(dim(matCG)[1]),
+          logLine[1,"CGreads"]<-ifelse(!is.null(dim(matCG)[1]),
                                          dim(matCG)[1], 0)
-          matrixLog[j,"GCreads"]<-ifelse(!is.null(dim(matGC)[1]),
+          logLine[1,"GCreads"]<-ifelse(!is.null(dim(matGC)[1]),
                                          dim(matGC)[1], 0)
-          matrixLog[j,"methMatReads"]<-ifelse(!is.null(dim(methMat)[1]),
+          logLine[1,"methMatReads"]<-ifelse(!is.null(dim(methMat)[1]),
                                             dim(methMat)[1], 0)
 
           # get bisulfite conversion stats for Cs in non-methylated context
@@ -581,7 +590,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
                                     regionGR, samtoolsPath)
           removeReads<-df[df$fractionConverted<minConversionRate,"reads"]
           methMat<-methMat[!(rownames(methMat) %in% removeReads),]
-          matrixLog[j,"goodConvReads"]<-ifelse(!is.null(dim(methMat)[1]),
+          logLine[1,"goodConvReads"]<-ifelse(!is.null(dim(methMat)[1]),
                                              dim(methMat)[1],0)
 
           if (is.null(dim(methMat))) {
@@ -618,29 +627,42 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
             conversionRatePlots<-c(conversionRatePlots,plotName)
           }
           # count reads that do not cover at least 1-maxNAfraction of the cytosines
-          matrixLog[j,"fewNAreads"]<-sum(rowMeans(is.na(methMat))<maxNAfraction)
+          logLine[1,"fewNAreads"]<-sum(rowMeans(is.na(methMat))<maxNAfraction)
+          sink(type="message")
           print(paste(i,regionType,currentSample,regionGR$ID,sep=" "))
+          sink()
           matName<-paste0(path,"/rds/methMats_", regionType,"/", currentSample,
                         "_", regionGR$ID, ".rds")
           saveRDS(methMat,file=matName)
-          matrixLog[j,"filename"]<-matName
+          logLine[1,"filename"]<-matName
           # write intermediate data to file so that if it crashes one can restart
-          utils::write.csv(matrixLog,paste0(path, "/csv/MatrixLog_", regionType,
-                                          addSampleName, ".csv"),
-                         quote=F, row.names=F)
+          sink(file=paste0(path, "/csv/MatrixLog_", regionType,
+                           addSampleName, "_log.csv"), append=TRUE,
+                           type="output")
+          cat(paste(logLine,collapse=","), sep="\n")
+          sink()
+          #utils::write.csv(logLine,paste0(path, "/csv/MatrixLog_", regionType,
+          #                                addSampleName, ".csv"),
+          #               quote=F, row.names=F)
         }
+        #print(matrixLog[j,])
+        logLine
       }
-      print(matrixLog[j,])
-      matrixLog[j,]
     }
     print(pmatrixLog)
     if (convRatePlots==TRUE) {
       #TODO:combine PDF function
     }
   }
-  # overwrite file with final data
-  #utils::write.csv(matrixLog,paste0(path, "/csv/MatrixLog_", regionType,
-  #                          addSampleName, ".csv"), quote=F, row.names=F)
+
+  pmatrixLog<-rbind(matrixLog,pmatrixLog)
+  pmatrixLog<-pmatrixLog[sum(!apply(pmatrixLog,1,is.na))>0,]
+  pmatrixLog<-pmatrixLog[order(pmatrixLog$regionNum),]
+  # write file with final data
+  utils::write.csv(pmatrixLog,paste0(path, "/csv/MatrixLog_", regionType,
+                            addSampleName, ".csv"), quote=F, row.names=F)
+  #file.remove(paste0(path, "/csv/MatrixLog_", regionType,
+  #                             addSampleName, "_log.csv"))
   return(pmatrixLog)
 }
 
@@ -655,17 +677,22 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
 #' @param samples Vector with names of samples to be processed
 #' @param regionGRs A genomic regions object with all regions for which matrices should be extracted. The metadata columns must contain a column called "ID" with a unique ID for that region.
 #' @return A data frame with columns to record data about the single molecule matrices
-getMatrixLog<-function(matrixLogFile, samples, regionGRs){
-  if (file.exists(matrixLogFile)) {
+getMatrixLog<-function(matrixLogFile){
+  if (file.exists(matrixLogFile) & file.info(matrixLogFile)$size>0) {
     # this allows restarting
-    matrixLog<-utils::read.csv(matrixLogFile, stringsAsFactors=F)
+    matrixLog<-utils::read.csv(matrixLogFile, stringsAsFactors=F, header=T,
+                               row.names=NULL)
   } else {
+    writeLines(paste(c("regionNum","filename","sample","region","numCGpos",
+                       "numGCpos","numUniquePos","CGreads","GCreads",
+                       "methMatReads","goodConvReads", "fewNAreads"),
+                     collapse=","), con=matrixLogFile)
     #log table to record number of reads in matrix at various steps
-    matrixLog<-data.frame(filename=NA,sample=rep(samples,each=length(regionGRs)),
-                          region=rep(regionGRs$ID, length(samples)),
+    matrixLog<-data.frame(regionNum=NA, filename=NA,sample=NA, region=NA,
                           numCGpos=NA, numGCpos=NA, numUniquePos=NA,
                           CGreads=NA, GCreads=NA, methMatReads=NA,
-                          goodConvReads=NA, fewNAreads=NA,stringsAsFactors=F)
+                          goodConvReads=NA, fewNAreads=NA,
+                          stringsAsFactors=F)
   }
   return(matrixLog)
 }

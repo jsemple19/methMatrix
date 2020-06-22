@@ -4,7 +4,7 @@
 \alias{getMatrixLog}
 \title{Read in an existing matrixLog, or create a new one}
 \usage{
-getMatrixLog(matrixLogFile, samples, regionGRs)
+getMatrixLog(matrixLogFile)
 }
 \arguments{
 \item{matrixLogFile}{Name of matrix log file complete with relative or absolut path}
