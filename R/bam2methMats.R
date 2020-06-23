@@ -654,9 +654,9 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
       #TODO:combine PDF function
     }
   }
-
+  #tidy and sort pmatrixLog
   pmatrixLog<-rbind(matrixLog,pmatrixLog)
-  pmatrixLog<-pmatrixLog[sum(!apply(pmatrixLog,1,is.na))>0,]
+  pmatrixLog<-pmatrixLog[rowSums(!is.na(pmatrixLog))>0,]
   pmatrixLog<-pmatrixLog[order(pmatrixLog$regionNum),]
   # write file with final data
   utils::write.csv(pmatrixLog,paste0(path, "/csv/MatrixLog_", regionType,
