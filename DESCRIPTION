@@ -25,7 +25,8 @@ Imports:  GenomicRanges,
           gridExtra,
           Biostrings,
           foreach,
-          doParallel
+          doParallel,
+          parallel
 Suggests: 
     knitr,
     rmarkdown,

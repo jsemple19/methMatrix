@@ -524,8 +524,8 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
   # make output directories
   makeDirs(path,c("csv", paste0("rds/methMats_",regionType)))
   if (convRatePlots==TRUE) {
-    makeDirs(path,c("plots/informativeCsPlots",
-                    "plots/conversionRatePlots"))
+    makeDirs(path,c("plots/informCs",
+                    "plots/convRate"))
   }
   samples<-sampleTable$SampleName
 
@@ -608,7 +608,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
                                     " Informative Cs per read (totalCs: ",
                                     df$totalCs[1]," )"))
             # save to file
-            plotName<-paste0(path,"/plots/informativeCsPlots/infC_", regionType,
+            plotName<-paste0(path,"/plots/informCs/infC_", regionType,
                              "_", currentSample,"_", regionGR$ID, ".pdf")
             ggplot2::ggsave(plotName, plot=p, device="pdf", width=7.25, height=5,
                           units="cm")
