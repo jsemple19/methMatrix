@@ -623,7 +623,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
               ggplot2::geom_vline(xintercept=minConversionRate, col="red",
                                 linetype="dashed")
             # save to file
-            plotName<-paste0(path,"/plots/conversionRatePlots/convR_",
+            plotName<-paste0(path,"/plots/convRate/convR_",
                              regionType, "_", currentSample,"_",regionGR$ID,"
                              .pdf")
             ggplot2::ggsave(plotName, plot=p, device="pdf", width=7.25, height=5,
@@ -634,6 +634,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
           logLine[1,"fewNAreads"]<-sum(rowMeans(is.na(methMat))<maxNAfraction)
           sink(type="message")
           cat(paste(i,regionType,currentSample,regionGR$ID,sep=" "),sep="\n")
+          cat(paste("path is: ",path),sep="/n")
           sink()
           matName<-paste0(path,"/rds/methMats_", regionType,"/", currentSample,
                         "_", regionGR$ID, ".rds")
@@ -679,8 +680,6 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
 #' for the samples (samples) and the regions (regionGRs). Teh function returns this
 #' matrixLog data.frame
 #' @param matrixLogFile Name of matrix log file complete with relative or absolut path
-#' @param samples Vector with names of samples to be processed
-#' @param regionGRs A genomic regions object with all regions for which matrices should be extracted. The metadata columns must contain a column called "ID" with a unique ID for that region.
 #' @return A data frame with columns to record data about the single molecule matrices
 getMatrixLog<-function(matrixLogFile){
   if (file.exists(matrixLogFile) & file.info(matrixLogFile)$size>0) {

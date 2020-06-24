@@ -8,10 +8,6 @@ getMatrixLog(matrixLogFile)
 }
 \arguments{
 \item{matrixLogFile}{Name of matrix log file complete with relative or absolut path}
-
-\item{samples}{Vector with names of samples to be processed}
-
-\item{regionGRs}{A genomic regions object with all regions for which matrices should be extracted. The metadata columns must contain a column called "ID" with a unique ID for that region.}
 }
 \value{
 A data frame with columns to record data about the single molecule matrices
