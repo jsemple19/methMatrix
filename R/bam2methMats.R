@@ -535,7 +535,6 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
                                  addSampleName,"_log.csv"))
 
   #print(matrixLog)
-
   for (currentSample in samples) {
     print(currentSample)
     bamFile<-sampleTable$FileName[sampleTable$SampleName==currentSample]
@@ -544,8 +543,12 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
       informativeCsPlots=vector()
       conversionRatePlots=vector()
     }
+    sink(type="message")
     clst<-parallel::makeCluster(nThreads)
     doParallel::registerDoParallel(clst)
+    cat("number of workers:")
+    cat(foreach::getDoParWorkers(),sep="\n")
+    sink()
     pmatrixLog<-foreach::foreach(i=1:length(regionGRs),
                                  .combine=rbind,
                                  .packages=c("GenomicRanges",
@@ -562,6 +565,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
                       regionGR$ID %in% matrixLog$region)
       #j<-which(matrixLog$sample==currentSample & matrixLog$region==regionGR$ID)
       if(!alreadyDone | overwriteMatrixLog==T){
+
         # get C conversion matrices
         matCG<-getReadMatrix(bamFile, genomeFile, bedFileCG, regionGR,
                            samtoolsPath)
@@ -629,7 +633,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
           # count reads that do not cover at least 1-maxNAfraction of the cytosines
           logLine[1,"fewNAreads"]<-sum(rowMeans(is.na(methMat))<maxNAfraction)
           sink(type="message")
-          print(paste(i,regionType,currentSample,regionGR$ID,sep=" "))
+          cat(paste(i,regionType,currentSample,regionGR$ID,sep=" "),sep="\n")
           sink()
           matName<-paste0(path,"/rds/methMats_", regionType,"/", currentSample,
                         "_", regionGR$ID, ".rds")
@@ -648,7 +652,8 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
         #print(matrixLog[j,])
         logLine
       }
-    }
+                                             }
+    parallel::stopCluster(clst)
     print(pmatrixLog)
     if (convRatePlots==TRUE) {
       #TODO:combine PDF function
