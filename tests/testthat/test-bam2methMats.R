@@ -15,8 +15,7 @@ testthat::test_that("getReadMatrix from bam works", {
 })
 
 
-#library(tictoc)
-#tic()
+
 testthat::test_that("getSingleMoleculeMatrices  works", {
   genomeFile<-"./inst/extData/genome/c_elegans.PRJNA13758.WS250.genomic_Xchr.fa"
   amplicons<-readRDS(system.file("extdata", "genome/ampliconGR.RDS",
@@ -42,5 +41,5 @@ testthat::test_that("getSingleMoleculeMatrices  works", {
                             convRatePlots=TRUE, nThreads=2)
   testthat::expect_equal(matTable$fewNAreads,c(502,1075,93,275))
 })
-#toc()
+
 

@@ -694,3 +694,50 @@ plotDSMFmetageneDF<-function(metageneDF,maxPoints=10000) {
   ml <- gridExtra::marrangeGrob(list(p1,p2), nrow=1, ncol=1)
   return(ml)
 }
+
+
+#' Merge tables listing methylation matrices for different samples
+#'
+#' Uses file naming convention of MatrixLog_regionType_sampleName.csv to
+#' merge tables of  methylation matrices that were processed separately for
+#' each sample. The function will merge all the samples listed in samples and
+#' then will also delete the original split files
+#' @param path  Path to working directory in which csv subdirectory exists.
+#' @param regionType A collective name for this list of regions (e.g TSS or amplicons). It is used in naming the files
+#' @param samples A list of sample names to merge (used in the name of the file)
+#' @param deleteSplitFiles Logical value to determine if individual sample files
+#' should be deleted (defualt=F).
+#' @return Table of merged samples
+#' @export
+mergeSampleMats<-function(path, regionType, samples, deleteSplitFiles=F) {
+  allSampleMats<-NULL
+  for(s in 1:length(samples)){
+    if(!file.exists(paste0(path,"/csv/MatrixLog_", regionType, "_",
+                           samples[s], ".csv"))){
+      cat(paste0("File ",path,"/csv/MatrixLog_", regionType, "_", samples[s],
+                 ".csv"," not found"),sep="\n")
+      next()
+    }
+    temp<-read.csv(paste0(path,"/csv/MatrixLog_", regionType, "_",
+                          samples[s], ".csv"),header=T,
+                   stringsAsFactors=F)
+    if(is.null(allSampleMats)) {
+      allSampleMats<-temp
+    } else {
+      allSampleMats<-rbind(allSampleMats,temp)
+    }
+  }
+  write.csv(allSampleMats,paste0(path, "/csv/MatrixLog_", regionType,".csv"),
+            quote=F, row.names=F)
+
+  # delete split files
+  if(deleteSplitFiles){
+    for(s in 1:length(samples)){
+      file.remove(paste0(path, "/csv/MatrixLog_", regionType, "_",samples[s],
+                         ".csv"))
+      file.remove(paste0(path, "/csv/MatrixLog_", regionType, "_", samples[s],
+                         "_log.csv"))
+    }
+  }
+  return(allSampleMats)
+}

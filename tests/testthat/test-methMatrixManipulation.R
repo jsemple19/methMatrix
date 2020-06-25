@@ -43,3 +43,13 @@ testthat::test_that("getMatrices subsets the matrix table correctly", {
   testthat::expect_equal(length(newMatList),dim(matTable)[1])
   testthat::expect_equal(dim(newMatList[[3]])[1],matTable$fewNAreads[3])
 })
+
+
+
+testthat::test_that("mergeSampleMats merges tables split by sample", {
+  path="inst/extData"
+  regionType="rawAmp"
+  samples=c("dS03-N2","dS03-N2")
+  allMats<-mergeSampleMats(path, regionType, samples, deleteSplitFiles=F)
+  testthat::expect_equal(nrow(allMats),8)
+})

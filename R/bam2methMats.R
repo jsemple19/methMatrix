@@ -634,7 +634,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
           logLine[1,"fewNAreads"]<-sum(rowMeans(is.na(methMat))<maxNAfraction)
           sink(type="message")
           cat(paste(i,regionType,currentSample,regionGR$ID,sep=" "),sep="\n")
-          cat(paste("path is: ",path),sep="/n")
+          #cat(paste("path is: ",path),sep="\n")
           sink()
           matName<-paste0(path,"/rds/methMats_", regionType,"/", currentSample,
                         "_", regionGR$ID, ".rds")
