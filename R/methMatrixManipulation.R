@@ -285,12 +285,18 @@ getMetaMethFreq<-function(matList,regionGRs,minReads=50) {
 #' the region is present)
 #' @param baseFontSize The base font for the plotting theme (default=12 works well for 4x plots per A4 page)
 #' @param maxNAfraction Maximual fraction of CpG/GpC positions that can be undefined (default=0.2)
+#' @param segmentSize Length of colour segment denoting methylation site
+#' @param colourChoice A list of colours for colour pallette. Must include
+#' values for "low", "mid", "high" and "bg" (background) and "lines".
 #' @return A ggplot2 plot object
 #' @export
 plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs=NULL,
                               myXlab="CpG/GpC position",
                               featureLabel="TSS", drawArrow=TRUE, title=NULL,
-                              baseFontSize=12, maxNAfraction=0.2) {
+                              baseFontSize=12, maxNAfraction=0.2, segmentSize=3,
+                              colourChoice=list(low="blue", mid="white",
+                                                high="red", bg="white",
+                                                lines="black")) {
   position<-methylation<-molecules<-NULL
   ### single molecule plot. mat is matrix containing methylation values at different postions
   # (columns) in individual reads (rows). regionName is the ID of the amplicon or genomic
@@ -337,8 +343,10 @@ plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs=NULL,
                    " ", strandInfo)
     }
     p<-ggplot2::ggplot(d,ggplot2::aes(x=position,y=molecules,width=2)) +
-      ggplot2::geom_tile(ggplot2::aes(width=3,fill=methylation),alpha=0.8) +
-      ggplot2::scale_fill_gradient(low="blue", high="red",
+      ggplot2::geom_tile(ggplot2::aes(width=segmentSize, fill=methylation),
+                         alpha=0.8) +
+      ggplot2::scale_fill_gradient2(low=colourChoice$low, mid=colourChoice$mid,
+                                   high=colourChoice$high,
                                    na.value="transparent",
                                    breaks=c(0,1),
                                    labels=c("protected","accessible"),
@@ -347,6 +355,7 @@ plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs=NULL,
       ggplot2::theme_light(base_size=baseFontSize) +
       ggplot2::theme(panel.grid.major = ggplot2::element_blank(),
                      panel.grid.minor = ggplot2::element_blank(),
+                     panel.background=ggplot2::element_rect(fill=colourChoice$bg),
             plot.title = ggplot2::element_text(face = "bold",hjust = 0.5),
             legend.position="bottom",
             legend.key.height = ggplot2::unit(0.2, "cm"),
@@ -360,7 +369,7 @@ plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs=NULL,
       p<-p+ggplot2::geom_linerange(ggplot2::aes(
         x=GenomicRanges::start(featGR), y=NULL, ymin=0,
         ymax=length(reads)+max(3,0.04*length(reads))),
-        col="black") +
+        col=colourChoice$lines) +
         ggplot2::annotate(geom="text", x=GenomicRanges::start(featGR),
                           y=-max(2,0.03*length(reads)),
                           label=featureLabel,color="black")
@@ -371,7 +380,7 @@ plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs=NULL,
                                       -1,1),
                           y = length(reads)+max(3,0.04*length(reads)),
                           yend =length(reads)+max(3,0.04*length(reads)),
-                          colour = "black",
+                          colour = colourChoice$lines,
                           arrow=ggplot2::arrow(length = ggplot2::unit(0.3,
                                                         "cm")), size=0.7)
       }
@@ -400,13 +409,19 @@ plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs=NULL,
 #' the region is present)
 #' @param baseFontSize The base font for the plotting theme (default=11 works well for 4x plots per A4 page)
 #' @param maxNAfraction Maximual fraction of CpG/GpC positions that can be undefined (default=0.2)
+#' @param segmentSize Length of colour segment denoting methylation site
+#' @param colourChoice A list of colours for colour pallette. Must include
+#' values for "low", "mid", "high" and "bg" (background) and "lines".
 #' @return A ggplot2 plot object
 #' @export
 plotSingleMoleculesWithAvr<-function(mat, regionName, regionGRs, featureGRs,
                                      myXlab="CpG/GpC position",
                                      featureLabel="TSS", drawArrow=TRUE,
                                      title=NULL, baseFontSize=11,
-                                     maxNAfraction=0.2) {
+                                     maxNAfraction=0.2, segmentSize=3,
+                                     colourChoice=list(low="blue", mid="white",
+                                                       high="red", bg="white",
+                                                       lines="grey80")) {
   dSMF<-molecules<-position<-methylation<-NULL
   # remove reads with more than maxNAfraction positions with NAs
   tooManyNAs<-rowMeans(is.na(mat))>maxNAfraction
@@ -458,33 +473,38 @@ plotSingleMoleculesWithAvr<-function(mat, regionName, regionGRs, featureGRs,
     if (length(featureGRs)>0) { # plot feature if present
       p1<-p1 + ggplot2::geom_linerange(ggplot2::aes(x=GenomicRanges::start(featGR),
                                                     y=NULL, ymin=0, ymax=1),
-                                       col="black",size=0.7)
+                                       col=colourChoice$lines,size=0.7)
       if (drawArrow==TRUE) {
         p1<-p1+ggplot2::annotate("segment", x = GenomicRanges::start(featGR),
                               xend = GenomicRanges::start(featGR)+
                                 20*ifelse(GenomicRanges::strand(featGR)=="-",-1,1),
-                              y = 1, yend = 1, colour = "black", size=0.7,
+                              y = 1, yend = 1, colour = colourChoice$lines, size=0.7,
                               arrow=ggplot2::arrow(length = ggplot2::unit(0.2, "cm")))
       }
     }
     #single molecule plot
     p2<-ggplot2::ggplot(d,ggplot2::aes(x=position,y=molecules,width=2)) +
-      ggplot2::geom_tile(ggplot2::aes(width=3,fill=methylation),alpha=0.8) +
-      ggplot2::scale_fill_gradient(low="blue", high="red", na.value="transparent",
+      ggplot2::geom_tile(ggplot2::aes(width=segmentSize,fill=methylation),alpha=0.8) +
+      ggplot2::scale_fill_gradient2(low=colourChoice$low, mid=colourChoice$mid,
+                                    high=colourChoice$high, na.value="transparent",
                                    breaks=c(0,1), labels=c("protected","accessible"),
                                    limits=c(0,1), name="dSMF\n\n") +
       ggplot2::theme_light(base_size=baseFontSize) +
       ggplot2::theme(panel.grid.major = ggplot2::element_blank(),
                      panel.grid.minor = ggplot2::element_blank(),
-                     plot.title = ggplot2::element_blank(), legend.position="bottom",
+                     panel.background=ggplot2::element_rect(fill=colourChoice$bg),
+                     plot.title = ggplot2::element_blank(),
+                     legend.position="bottom",
                      legend.key.height = ggplot2::unit(0.2, "cm"),
                      legend.key.width=ggplot2::unit(0.5,"cm")) +
       ggplot2::xlab(myXlab) +
       ggplot2::ylab("Single molecules") +
       ggplot2::xlim(GenomicRanges::start(regionGR),GenomicRanges::end(regionGR)+20)
     if (length(featureGRs)>0) { # plot feature if present
-      p2<-p2+ggplot2::geom_linerange(ggplot2::aes(x=GenomicRanges::start(featGR), y=NULL, ymin=0,
-                                         ymax=length(reads)+max(3,0.04*length(reads))), col="black") +
+      p2<-p2+ggplot2::geom_linerange(ggplot2::aes(x=GenomicRanges::start(featGR),
+                                                  y=NULL, ymin=0,
+                                         ymax=length(reads)+max(3,0.04*length(reads))),
+                                     col=colourChoice$lines) +
              ggplot2::annotate(geom="text", x=GenomicRanges::start(featGR),
                                y=-max(2,0.03*length(reads)),
                           label=featureLabel, color="black")
