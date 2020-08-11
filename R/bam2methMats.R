@@ -57,6 +57,7 @@ getReadMatrix<-function(bamFile, genomeFile, bedFile, region, samtoolsPath="",
                      bedFile, " -r ", region,
                 "  --output-QNAME --max-depth ", maxDepth, " --min-BQ 8 ",
                 " --ff UNMAP,QCFAIL ", bamFile),intern=T)
+  #tab<-Rsamtools::pileup(file=bamFile,max_depth=maxDepth,min_base_quality=8,)
   if (length(tab)>0) {
     # convert output to data frame
     tab<-lapply(tab,strsplit,"\t")
@@ -550,7 +551,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
     cat(foreach::getDoParWorkers(),sep="\n")
     sink()
     pmatrixLog<-foreach::foreach(i=1:length(regionGRs),
-                                 .combine=rbind,
+                                 .combine=rbind, .errorhandling="remove",
                                  .packages=c("GenomicRanges",
                                              "S4Vectors")) %dopar% {
     #for (i in seq_along(regionGRs)) {
@@ -597,9 +598,9 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
           logLine[1,"goodConvReads"]<-ifelse(!is.null(dim(methMat)[1]),
                                              dim(methMat)[1],0)
 
-          if (is.null(dim(methMat))) {
-            next
-          }
+          # if (is.null(dim(methMat))) {
+          #   next;
+          # }
           if (convRatePlots==TRUE) {
           ## plot histogram of number informative Cs per read
             p<-ggplot2::ggplot(df,ggplot2::aes(x=informativeCs/totalCs)) +
@@ -624,8 +625,8 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
                                 linetype="dashed")
             # save to file
             plotName<-paste0(path,"/plots/convRate/convR_",
-                             regionType, "_", currentSample,"_",regionGR$ID,"
-                             .pdf")
+                             regionType, "_", currentSample,"_",regionGR$ID,
+                             ".pdf")
             ggplot2::ggsave(plotName, plot=p, device="pdf", width=7.25, height=5,
                           units="cm")
             conversionRatePlots<-c(conversionRatePlots,plotName)

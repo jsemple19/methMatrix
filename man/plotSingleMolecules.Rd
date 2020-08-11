@@ -8,7 +8,7 @@ plotSingleMolecules(
   mat,
   regionName,
   regionGRs,
-  featureGRs = "",
+  featureGRs = NULL,
   myXlab = "CpG/GpC position",
   featureLabel = "TSS",
   drawArrow = TRUE,

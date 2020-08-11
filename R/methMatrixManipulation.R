@@ -33,74 +33,74 @@ library(ggpubr)
 #names(mcols(TSS))<-"ID"
 #save(TSS, file="data/TSSgr.RData")
 
-#' Extract matrices into a simple list
-#'
-#' @param methMats A table of filepaths to methylation matrices
-#' (usually named by the genomic region they come from)
-#' @param regionName A vector containing the names of regions of interest (default is all regions)
-#' @param sampleName A vector containing the names of samples of interest (default is all samples)
-#' @return A simple, one level list of methylation matrices for the samples and regions of interest.
-#' Matrices will be named with both the sample and the region name joined by "__"
-#' @examples
-#' getMatrices(methMats)
-#' #will return a simple list of all regions in all samples, changing the name of the matrices
-#' getMatrices(methMats,regionName="WBGene00009234")
-#' #will return a simple list of the matrices for that gene from all samples
-#' getMatrices(methMats,regionName=c("WBGene00009234","WBGene00009621"))
-#' #will return a simple list of the matrices for both those genes from all samples
-#' getMatrices(methMats,sampleName="182_dSMFv002amp")
-#' #will return a simple list of the matrices for all gene from this sample only
-#' getMatrices(methMats,regionName="WBGene00009234",sampleName="182_dSMFv002amp")
-#' #will return a single item list of a matrix for that gene in that sample.
-#' @export
-getMatrices<-function(methMats,regionName=c(),sampleName=c()) {
-  idx<-NULL
-  # extracts a simple list of matrices. It is possible to also subset by regionName or sampleName
-  # each matrix will have a name composed of sampleName__regionName
-  newMats<-list()
-  if(length(sampleName)==0) {
-    sampleName<-unique(methMats$sample)
-  }
-  if(length(regionName)==0) {
-    regionName<-unique(methMats$region)
-  }
-  s<-methMats$sample %in% sampleName
-  r<-methMats$region %in% regionName
-  idx<-r*s
-  for (i in which(idx==1)) {
-    mat<-readRDS(methMats$filename[i])
-    newName<-paste0(methMats[idx,"sample"][i], "__", methMats[idx,"region"][i])
-    newMats[[newName]]<-mat
-  }
-  return(newMats)
-}
+#' #' Extract matrices into a simple list
+#' #'
+#' #' @param methMats A table of filepaths to methylation matrices
+#' #' (usually named by the genomic region they come from)
+#' #' @param regionName A vector containing the names of regions of interest (default is all regions)
+#' #' @param sampleName A vector containing the names of samples of interest (default is all samples)
+#' #' @return A simple, one level list of methylation matrices for the samples and regions of interest.
+#' #' Matrices will be named with both the sample and the region name joined by "__"
+#' #' @examples
+#' #' getMatrices(methMats)
+#' #' #will return a simple list of all regions in all samples, changing the name of the matrices
+#' #' getMatrices(methMats,regionName="WBGene00009234")
+#' #' #will return a simple list of the matrices for that gene from all samples
+#' #' getMatrices(methMats,regionName=c("WBGene00009234","WBGene00009621"))
+#' #' #will return a simple list of the matrices for both those genes from all samples
+#' #' getMatrices(methMats,sampleName="182_dSMFv002amp")
+#' #' #will return a simple list of the matrices for all gene from this sample only
+#' #' getMatrices(methMats,regionName="WBGene00009234",sampleName="182_dSMFv002amp")
+#' #' #will return a single item list of a matrix for that gene in that sample.
+#' #' @export
+#' getMatrices<-function(methMats,regionName=c(),sampleName=c()) {
+#'   idx<-NULL
+#'   # extracts a simple list of matrices. It is possible to also subset by regionName or sampleName
+#'   # each matrix will have a name composed of sampleName__regionName
+#'   newMats<-list()
+#'   if(length(sampleName)==0) {
+#'     sampleName<-unique(methMats$sample)
+#'   }
+#'   if(length(regionName)==0) {
+#'     regionName<-unique(methMats$region)
+#'   }
+#'   s<-methMats$sample %in% sampleName
+#'   r<-methMats$region %in% regionName
+#'   idx<-r*s
+#'   for (i in which(idx==1)) {
+#'     mat<-readRDS(methMats$filename[i])
+#'     newName<-paste0(methMats[idx,"sample"][i], "__", methMats[idx,"region"][i])
+#'     newMats[[newName]]<-mat
+#'   }
+#'   return(newMats)
+#' }
 
 
-#' Merge multiple matrices into a single matrix
-#'
-#' This function takes a list of matrices with the same number of columns and merges
-# them to a single matrix. row names will now contain sampleName__regionName__readName
-#'
-#' @param matList A table of paths to matrices which have the same columns
-#' @return A single methylation matrix
-#' @export
-rbindMatrixList<-function(matList) {
-  naRows<-is.na(matList$filename)
-  matList<-matList[!naRows,]
-  first<-TRUE
-  for (i in 1:nrow(matList)) {
-    mat<-readRDS(matList$filename[i])
-    row.names(mat)<-paste0(matList$sample[i],"__",matList$region[i],"__",row.names(mat))
-    if (first==TRUE) {
-      mergedMat<-mat
-      first<-FALSE
-    } else {
-      mergedMat<-rbind(mergedMat,mat)
-    }
-  #row.names(mergedMat)<-paste0(rep(names(matList),sapply(matList,nrow)),"__",row.names(mergedMat))
-  }
-  return(mergedMat)
-}
+#' #' Merge multiple matrices into a single matrix
+#' #'
+#' #' This function takes a list of matrices with the same number of columns and merges
+#' # them to a single matrix. row names will now contain sampleName__regionName__readName
+#' #'
+#' #' @param matList A table of paths to matrices which have the same columns
+#' #' @return A single methylation matrix
+#' #' @export
+#' rbindMatrixList<-function(matList) {
+#'   naRows<-is.na(matList$filename)
+#'   matList<-matList[!naRows,]
+#'   first<-TRUE
+#'   for (i in 1:nrow(matList)) {
+#'     mat<-readRDS(matList$filename[i])
+#'     row.names(mat)<-paste0(matList$sample[i],"__",matList$region[i],"__",row.names(mat))
+#'     if (first==TRUE) {
+#'       mergedMat<-mat
+#'       first<-FALSE
+#'     } else {
+#'       mergedMat<-rbind(mergedMat,mat)
+#'     }
+#'   #row.names(mergedMat)<-paste0(rep(names(matList),sapply(matList,nrow)),"__",row.names(mergedMat))
+#'   }
+#'   return(mergedMat)
+#' }
 
 
 #' Convert C position numbering from genomic to relative coordinates
@@ -164,7 +164,7 @@ getFullMatrices<-function(matList,regionType,winSize=500, workDir=".") {
   currentSample<-regionGR<-NULL
   naRows<-is.na(matList$filename)
   matList<-matList[!naRows,]
-  makeDirs(workDir,paste0("rds/paddedMats_",regionType))
+  makeDirs(workDir,paste0("/rds/paddedMats_",regionType))
   matrixLog<-matList[,c("filename","sample","region")]
   matrixLog$filename<-NA
   for (i in 1:nrow(matList)) {
@@ -179,7 +179,7 @@ getFullMatrices<-function(matList,regionType,winSize=500, workDir=".") {
     saveRDS(fullMat,file=matName)
     matrixLog[i,"filename"]<-matName
   }
-  utils::write.csv(matrixLog,paste0(workDir,"/csv/MatrixLog_paddedMats_",regionType,".csv"), quote=F, row.names=F)
+  #utils::write.csv(matrixLog,paste0(workDir,"/csv/MatrixLog_paddedMats_",regionType,".csv"), quote=F, row.names=F)
   return(matrixLog)
 }
 
@@ -287,7 +287,7 @@ getMetaMethFreq<-function(matList,regionGRs,minReads=50) {
 #' @param maxNAfraction Maximual fraction of CpG/GpC positions that can be undefined (default=0.2)
 #' @return A ggplot2 plot object
 #' @export
-plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs="",
+plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs=NULL,
                               myXlab="CpG/GpC position",
                               featureLabel="TSS", drawArrow=TRUE, title=NULL,
                               baseFontSize=12, maxNAfraction=0.2) {
@@ -303,7 +303,7 @@ plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs="",
   mat<-mat[!tooManyNAs,]
   if (!is.null(dim(mat)) & any(dim(mat)[1]>10)) {
     regionGR<-regionGRs[match(regionName,regionGRs$ID)]
-    if (length(featureGRs)>1) {
+    if (length(featureGRs)>0) {
       featGR<-featureGRs[match(regionName,featureGRs$ID)]
     }
     na.matrix<-is.na(mat)
@@ -327,42 +327,54 @@ plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs="",
     #d$methylation<-as.character(d$methylation)
     d$position<-as.numeric(d$position)
     if (is.null(title)) {
-      strandInfo<-ifelse(GenomicRanges::strand(featGR)!=GenomicRanges::strand(regionGR),
-                         paste0("reg: ",GenomicRanges::strand(regionGR),"ve, ",
-                                featureLabel,": ",GenomicRanges::strand(featGR),"ve strand"),
+      strandInfo<-ifelse(GenomicRanges::strand(featGR)!=
+                           GenomicRanges::strand(regionGR),
+                         paste0("reg: ", GenomicRanges::strand(regionGR),
+                                "ve, ",featureLabel,": ",
+                                GenomicRanges::strand(featGR),"ve strand"),
                          paste0(GenomicRanges::strand(regionGR),"ve strand"))
-      title=paste0(regionName, ": ",GenomicRanges::seqnames(regionGR)," ",strandInfo)
+      title=paste0(regionName, ": ", GenomicRanges::seqnames(regionGR),
+                   " ", strandInfo)
     }
     p<-ggplot2::ggplot(d,ggplot2::aes(x=position,y=molecules,width=2)) +
       ggplot2::geom_tile(ggplot2::aes(width=3,fill=methylation),alpha=0.8) +
-      ggplot2::scale_fill_gradient(low="blue", high="red", na.value="transparent",
-                                   breaks=c(0,1), labels=c("protected","accessible"),
+      ggplot2::scale_fill_gradient(low="blue", high="red",
+                                   na.value="transparent",
+                                   breaks=c(0,1),
+                                   labels=c("protected","accessible"),
                                    limits=c(0,1), name="dSMF\n\n") +
       #ggplot2::scale_fill_manual(values=c("0"="black","1"="grey80"),na.translate=F,na.value="white", labels=c("protected","accessible"),name="dSMF") +
       ggplot2::theme_light(base_size=baseFontSize) +
       ggplot2::theme(panel.grid.major = ggplot2::element_blank(),
                      panel.grid.minor = ggplot2::element_blank(),
             plot.title = ggplot2::element_text(face = "bold",hjust = 0.5),
-            legend.position="bottom", legend.key.height = ggplot2::unit(0.2, "cm"),
+            legend.position="bottom",
+            legend.key.height = ggplot2::unit(0.2, "cm"),
             legend.key.width=ggplot2::unit(0.5,"cm")) +
       ggplot2::ggtitle(title) +
       ggplot2::xlab(myXlab) +
       ggplot2::ylab("Single molecules") +
-      ggplot2::xlim(GenomicRanges::start(regionGR),GenomicRanges::end(regionGR)+10)
+      ggplot2::xlim(GenomicRanges::start(regionGR),
+                    GenomicRanges::end(regionGR)+10)
     if(length(featureGRs)>0) {
-      p<-p+ggplot2::geom_linerange(ggplot2::aes(x=GenomicRanges::start(featGR), y=NULL, ymin=0,
-                                       ymax=length(reads)+max(3,0.04*length(reads))),col="black")+
-        ggplot2::annotate(geom="text", x=GenomicRanges::start(featGR), y=-max(2,0.03*length(reads)),
+      p<-p+ggplot2::geom_linerange(ggplot2::aes(
+        x=GenomicRanges::start(featGR), y=NULL, ymin=0,
+        ymax=length(reads)+max(3,0.04*length(reads))),
+        col="black") +
+        ggplot2::annotate(geom="text", x=GenomicRanges::start(featGR),
+                          y=-max(2,0.03*length(reads)),
                           label=featureLabel,color="black")
       if (drawArrow==TRUE) {
         p<-p+ggplot2::annotate("segment", x = GenomicRanges::start(featGR),
                           xend = GenomicRanges::start(featGR)+
-                            20*ifelse(GenomicRanges::strand(featGR)=="-",-1,1),
+                            20*ifelse(GenomicRanges::strand(featGR)=="-",
+                                      -1,1),
                           y = length(reads)+max(3,0.04*length(reads)),
                           yend =length(reads)+max(3,0.04*length(reads)),
-                          colour = "black", arrow=ggplot2::arrow(length = ggplot2::unit(0.3, "cm")), size=0.7)
+                          colour = "black",
+                          arrow=ggplot2::arrow(length = ggplot2::unit(0.3,
+                                                        "cm")), size=0.7)
       }
-
     }
   } else {
     p<-NULL
@@ -625,6 +637,41 @@ convertGRtoRelCoord<-function(grs,winSize,anchorPoint="middle") {
 }
 
 
+#' Convert relative cooridnates to absolute genomic position
+#'
+#' Convert genomic ranges where the start and end are
+#'  relative to some anchor point - either the middle or the start of
+#'  the genomic ranges (e.g. -250 to 250, or 0 to 500) to a normal Genomic
+#'  Ranges with absolute genomic positions.
+#' @param grsRelCoord A GenomicRanges object with one or more relative
+#'  coordinate ranges to be converted to absolute genomic positions.
+#' @param regionGR A GenomicRanges object for the whole region to which the
+#' grsRelCoord are relative to.
+#' @param anchorPoint One of "middle" or "start": the position from which numbering starts
+#' @return A GenomicRanges object with absolute genomic position
+#' @export
+convertRelCoordtoGR<-function(grsRelCoord,regionGR,anchorPoint="middle") {
+  winSize<-NULL
+  grs<-grsRelCoord
+  #grsRelCoord<-GenomicRanges::resize(grsRelCoord,width=winSize,fix="center")
+  GenomicRanges::strand(grs)<-GenomicRanges::strand(regionGR)
+  if (anchorPoint=="middle") {
+    GenomicRanges::start(grs)<- GenomicRanges::start(regionGR) +
+      winSize/2 + GenomicRanges::start(grsRelCoord)
+    GenomicRanges::end(grs)<- GenomicRanges::start(regionGR) +
+      winSize/2 + GenomicRanges::end(grsRelCoord)
+  } else if (anchorPoint=="start") {
+    GenomicRanges::start(grs)<- GenomicRanges::start(regionGR) - 1 +
+      GenomicRanges::start(grsRelCoord)
+    GenomicRanges::end(grs)<- GenomicRanges::start(regionGR) +
+      GenomicRanges::end(grsRelCoord)
+  } else {
+    print("anchorPoint must be one of 'middle' or 'start'")
+  }
+  return(grs)
+}
+
+
 #' get average methylation frequency from all matrices
 #'
 #' In order to do a metagene plot from matrices, the average methylation frequency from all
@@ -718,7 +765,7 @@ mergeSampleMats<-function(path, regionType, samples, deleteSplitFiles=F) {
                  ".csv"," not found"),sep="\n")
       next()
     }
-    temp<-read.csv(paste0(path,"/csv/MatrixLog_", regionType, "_",
+    temp<-utils::read.csv(paste0(path,"/csv/MatrixLog_", regionType, "_",
                           samples[s], ".csv"),header=T,
                    stringsAsFactors=F)
     if(is.null(allSampleMats)) {
@@ -727,7 +774,7 @@ mergeSampleMats<-function(path, regionType, samples, deleteSplitFiles=F) {
       allSampleMats<-rbind(allSampleMats,temp)
     }
   }
-  write.csv(allSampleMats,paste0(path, "/csv/MatrixLog_", regionType,".csv"),
+  utils::write.csv(allSampleMats,paste0(path, "/csv/MatrixLog_", regionType,".csv"),
             quote=F, row.names=F)
 
   # delete split files

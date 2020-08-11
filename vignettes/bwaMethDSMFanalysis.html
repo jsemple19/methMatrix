@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title>Dual enzyme single molecule footprinting (DSMF) analysis</title>
+
+<script type="text/javascript">
+window.onload = function() {
+  var imgs = document.getElementsByTagName('img'), i, img;
+  for (i = 0; i < imgs.length; i++) {
+    img = imgs[i];
+    // center an image if it is the only element of its parent
+    if (img.parentElement.childElementCount === 1)
+      img.parentElement.style.textAlign = 'center';
+  }
+};
+</script>
+
+<!-- Styles for R syntax highlighter -->
+<style type="text/css">
+   pre .operator,
+   pre .paren {
+     color: rgb(104, 118, 135)
+   }
+
+   pre .literal {
+     color: #990073
+   }
+
+   pre .number {
+     color: #099;
+   }
+
+   pre .comment {
+     color: #998;
+     font-style: italic
+   }
+
+   pre .keyword {
+     color: #900;
+     font-weight: bold
+   }
+
+   pre .identifier {
+     color: rgb(0, 0, 0);
+   }
+
+   pre .string {
+     color: #d14;
+   }
+</style>
+
+<!-- R syntax highlighter -->
+<script type="text/javascript">
+var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function f(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function b(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function h(t,s){var p="";for(var r=0;r<t.childNodes.length;r++){if(t.childNodes[r].nodeType==3){var q=t.childNodes[r].nodeValue;if(s){q=q.replace(/\n/g,"")}p+=q}else{if(t.childNodes[r].nodeName=="BR"){p+="\n"}else{p+=h(t.childNodes[r])}}}if(/MSIE [678]/.test(navigator.userAgent)){p=p.replace(/\r/g,"\n")}return p}function a(s){var r=s.className.split(/\s+/);r=r.concat(s.parentNode.className.split(/\s+/));for(var q=0;q<r.length;q++){var p=r[q].replace(/^language-/,"");if(e[p]){return p}}}function c(q){var p=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{if(s.childNodes[r].nodeType==1){p.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);p.push({event:"stop",offset:t,node:s.childNodes[r]})}}}}return t})(q,0);return p}function k(y,w,x){var q=0;var z="";var s=[];function u(){if(y.length&&w.length){if(y[0].offset!=w[0].offset){return(y[0].offset<w[0].offset)?y:w}else{return w[0].event=="start"?y:w}}else{return y.length?y:w}}function t(D){var A="<"+D.nodeName.toLowerCase();for(var B=0;B<D.attributes.length;B++){var C=D.attributes[B];A+=" "+C.nodeName.toLowerCase();if(C.value!==undefined&&C.value!==false&&C.value!==null){A+='="'+m(C.value)+'"'}}return A+">"}while(y.length||w.length){var v=u().splice(0,1)[0];z+=m(x.substr(q,v.offset-q));q=v.offset;if(v.event=="start"){z+=t(v.node);s.push(v.node)}else{if(v.event=="stop"){var p,r=s.length;do{r--;p=s[r];z+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);s.splice(r,1);while(r<s.length){z+=t(s[r]);r++}}}}return z+m(x.substr(q))}function j(){function q(x,y,v){if(x.compiled){return}var u;var s=[];if(x.k){x.lR=f(y,x.l||hljs.IR,true);for(var w in x.k){if(!x.k.hasOwnProperty(w)){continue}if(x.k[w] instanceof Object){u=x.k[w]}else{u=x.k;w="keyword"}for(var r in u){if(!u.hasOwnProperty(r)){continue}x.k[r]=[w,u[r]];s.push(r)}}}if(!v){if(x.bWK){x.b="\\b("+s.join("|")+")\\s"}x.bR=f(y,x.b?x.b:"\\B|\\b");if(!x.e&&!x.eW){x.e="\\B|\\b"}if(x.e){x.eR=f(y,x.e)}}if(x.i){x.iR=f(y,x.i)}if(x.r===undefined){x.r=1}if(!x.c){x.c=[]}x.compiled=true;for(var t=0;t<x.c.length;t++){if(x.c[t]=="self"){x.c[t]=x}q(x.c[t],y,false)}if(x.starts){q(x.starts,y,false)}}for(var p in e){if(!e.hasOwnProperty(p)){continue}q(e[p].dM,e[p],true)}}function d(B,C){if(!j.called){j();j.called=true}function q(r,M){for(var L=0;L<M.c.length;L++){if((M.c[L].bR.exec(r)||[null])[0]==r){return M.c[L]}}}function v(L,r){if(D[L].e&&D[L].eR.test(r)){return 1}if(D[L].eW){var M=v(L-1,r);return M?M+1:0}return 0}function w(r,L){return L.i&&L.iR.test(r)}function K(N,O){var M=[];for(var L=0;L<N.c.length;L++){M.push(N.c[L].b)}var r=D.length-1;do{if(D[r].e){M.push(D[r].e)}r--}while(D[r+1].eW);if(N.i){M.push(N.i)}return f(O,M.join("|"),true)}function p(M,L){var N=D[D.length-1];if(!N.t){N.t=K(N,E)}N.t.lastIndex=L;var r=N.t.exec(M);return r?[M.substr(L,r.index-L),r[0],false]:[M.substr(L),"",true]}function z(N,r){var L=E.cI?r[0].toLowerCase():r[0];var M=N.k[L];if(M&&M instanceof Array){return M}return false}function F(L,P){L=m(L);if(!P.k){return L}var r="";var O=0;P.lR.lastIndex=0;var M=P.lR.exec(L);while(M){r+=L.substr(O,M.index-O);var N=z(P,M);if(N){x+=N[1];r+='<span class="'+N[0]+'">'+M[0]+"</span>"}else{r+=M[0]}O=P.lR.lastIndex;M=P.lR.exec(L)}return r+L.substr(O,L.length-O)}function J(L,M){if(M.sL&&e[M.sL]){var r=d(M.sL,L);x+=r.keyword_count;return r.value}else{return F(L,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){y+=L;M.buffer=""}else{if(M.eB){y+=m(r)+L;M.buffer=""}else{y+=L;M.buffer=r}}D.push(M);A+=M.r}function G(N,M,Q){var R=D[D.length-1];if(Q){y+=J(R.buffer+N,R);return false}var P=q(M,R);if(P){y+=J(R.buffer+N,R);I(P,M);return P.rB}var L=v(D.length-1,M);if(L){var O=R.cN?"</span>":"";if(R.rE){y+=J(R.buffer+N,R)+O}else{if(R.eE){y+=J(R.buffer+N,R)+O+m(M)}else{y+=J(R.buffer+N+M,R)+O}}while(L>1){O=D[D.length-2].cN?"</span>":"";y+=O;L--;D.length--}var r=D[D.length-1];D.length--;D[D.length-1].buffer="";if(r.starts){I(r.starts,"")}return R.rE}if(w(M,R)){throw"Illegal"}}var E=e[B];var D=[E.dM];var A=0;var x=0;var y="";try{var s,u=0;E.dM.buffer="";do{s=p(C,u);var t=G(s[0],s[1],s[2]);u+=s[0].length;if(!t){u+=s[1].length}}while(!s[2]);if(D.length>1){throw"Illegal"}return{r:A,keyword_count:x,value:y}}catch(H){if(H=="Illegal"){return{r:0,keyword_count:0,value:m(C)}}else{throw H}}}function g(t){var p={keyword_count:0,r:0,value:m(t)};var r=p;for(var q in e){if(!e.hasOwnProperty(q)){continue}var s=d(q,t);s.language=q;if(s.keyword_count+s.r>r.keyword_count+r.r){r=s}if(s.keyword_count+s.r>p.keyword_count+p.r){r=p;p=s}}if(r.language){p.second_best=r}return p}function i(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function n(t,w,r){var x=h(t,r);var v=a(t);var y,s;if(v){y=d(v,x)}else{return}var q=c(t);if(q.length){s=document.createElement("pre");s.innerHTML=y.value;y.value=k(q,c(s),x)}y.value=i(y.value,w,r);var u=t.className;if(!u.match("(\\s|^)(language-)?"+v+"(\\s|$)")){u=u?(u+" "+v):v}if(/MSIE [678]/.test(navigator.userAgent)&&t.tagName=="CODE"&&t.parentNode.tagName=="PRE"){s=t.parentNode;var p=document.createElement("div");p.innerHTML="<pre><code>"+y.value+"</code></pre>";t=p.firstChild.firstChild;p.firstChild.cN=s.cN;s.parentNode.replaceChild(p.firstChild,s)}else{t.innerHTML=y.value}t.className=u;t.result={language:v,kw:y.keyword_count,re:y.r};if(y.second_best){t.second_best={language:y.second_best.language,kw:y.second_best.keyword_count,re:y.second_best.r}}}function o(){if(o.called){return}o.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=b(r[p]);if(q){n(q,hljs.tabReplace)}}}function l(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",o,false);window.addEventListener("load",o,false)}else{if(window.attachEvent){window.attachEvent("onload",o)}else{window.onload=o}}}var e={};this.LANGUAGES=e;this.highlight=d;this.highlightAuto=g;this.fixMarkup=i;this.highlightBlock=n;this.initHighlighting=o;this.initHighlightingOnLoad=l;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0[xX][a-fA-F0-9]+|(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)";this.BNR="\\b(0b[01]+)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.ER="(?![\\s\\S])";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.BNM={cN:"number",b:this.BNR,r:0};this.inherit=function(r,s){var p={};for(var q in r){p[q]=r[q]}if(s){for(var q in s){p[q]=s[q]}}return p}}();hljs.LANGUAGES.cpp=function(){var a={keyword:{"false":1,"int":1,"float":1,"while":1,"private":1,"char":1,"catch":1,"export":1,virtual:1,operator:2,sizeof:2,dynamic_cast:2,typedef:2,const_cast:2,"const":1,struct:1,"for":1,static_cast:2,union:1,namespace:1,unsigned:1,"long":1,"throw":1,"volatile":2,"static":1,"protected":1,bool:1,template:1,mutable:1,"if":1,"public":1,friend:2,"do":1,"return":1,"goto":1,auto:1,"void":2,"enum":1,"else":1,"break":1,"new":1,extern:1,using:1,"true":1,"class":1,asm:1,"case":1,typeid:1,"short":1,reinterpret_cast:2,"default":1,"double":1,register:1,explicit:1,signed:1,typename:1,"try":1,"this":1,"switch":1,"continue":1,wchar_t:1,inline:1,"delete":1,alignof:1,char16_t:1,char32_t:1,constexpr:1,decltype:1,noexcept:1,nullptr:1,static_assert:1,thread_local:1,restrict:1,_Bool:1,complex:1},built_in:{std:1,string:1,cin:1,cout:1,cerr:1,clog:1,stringstream:1,istringstream:1,ostringstream:1,auto_ptr:1,deque:1,list:1,queue:1,stack:1,vector:1,map:1,set:1,bitset:1,multiset:1,multimap:1,unordered_set:1,unordered_map:1,unordered_multiset:1,unordered_multimap:1,array:1,shared_ptr:1}};return{dM:{k:a,i:"</",c:[hljs.CLCM,hljs.CBLCLM,hljs.QSM,{cN:"string",b:"'\\\\?.",e:"'",i:"."},{cN:"number",b:"\\b(\\d+(\\.\\d*)?|\\.\\d+)(u|U|l|L|ul|UL|f|F)"},hljs.CNM,{cN:"preprocessor",b:"#",e:"$"},{cN:"stl_container",b:"\\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\\s*<",e:">",k:a,r:10,c:["self"]}]}}}();hljs.LANGUAGES.r={dM:{c:[hljs.HCM,{cN:"number",b:"\\b0[xX][0-9a-fA-F]+[Li]?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+(?:[eE][+\\-]?\\d*)?L\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+\\.(?!\\d)(?:i\\b)?",e:hljs.IMMEDIATE_RE,r:1},{cN:"number",b:"\\b\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"keyword",b:"(?:tryCatch|library|setGeneric|setGroupGeneric)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\.",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\d+(?![\\w.])",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\b(?:function)",e:hljs.IMMEDIATE_RE,r:2},{cN:"keyword",b:"(?:if|in|break|next|repeat|else|for|return|switch|while|try|stop|warning|require|attach|detach|source|setMethod|setClass)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"literal",b:"(?:NA|NA_integer_|NA_real_|NA_character_|NA_complex_)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"literal",b:"(?:NULL|TRUE|FALSE|T|F|Inf|NaN)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"identifier",b:"[a-zA-Z.][a-zA-Z0-9._]*\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"<\\-(?!\\s*\\d)",e:hljs.IMMEDIATE_RE,r:2},{cN:"operator",b:"\\->|<\\-",e:hljs.IMMEDIATE_RE,r:1},{cN:"operator",b:"%%|~",e:hljs.IMMEDIATE_RE},{cN:"operator",b:">=|<=|==|!=|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||\\$|:",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"%",e:"%",i:"\\n",r:1},{cN:"identifier",b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE],r:0},{cN:"paren",b:"[[({\\])}]",e:hljs.IMMEDIATE_RE,r:0}]}};
+hljs.initHighlightingOnLoad();
+</script>
+
+
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 13px;
+}
+
+body {
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 20px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 {
+   font-size:2.2em;
+}
+
+h2 {
+   font-size:1.8em;
+}
+
+h3 {
+   font-size:1.4em;
+}
+
+h4 {
+   font-size:1.0em;
+}
+
+h5 {
+   font-size:0.9em;
+}
+
+h6 {
+   font-size:0.8em;
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre, img {
+  max-width: 100%;
+}
+pre {
+  overflow-x: auto;
+}
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code {
+  font-size: 92%;
+  border: 1px solid #ccc;
+}
+
+code[class] {
+  background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * {
+      background: transparent !important;
+      color: black !important;
+      filter:none !important;
+      -ms-filter: none !important;
+   }
+
+   body {
+      font-size:12pt;
+      max-width:100%;
+   }
+
+   a, a:visited {
+      text-decoration: underline;
+   }
+
+   hr {
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote {
+      padding-right: 1em;
+      page-break-inside: avoid;
+   }
+
+   tr, img {
+      page-break-inside: avoid;
+   }
+
+   img {
+      max-width: 100% !important;
+   }
+
+   @page :left {
+      margin: 15mm 20mm 15mm 10mm;
+   }
+
+   @page :right {
+      margin: 15mm 10mm 15mm 20mm;
+   }
+
+   p, h2, h3 {
+      orphans: 3; widows: 3;
+   }
+
+   h2, h3 {
+      page-break-after: avoid;
+   }
+}
+</style>
+
+
+
+</head>
+
+<body>
+<h1>Dual enzyme single molecule footprinting (DSMF) analysis</h1>
+
+<h2>Using bwa-meth for bisulfite sequence analysis</h2>
+
+<p>Genome wide bisulfite data can be analysed relatively easily using QuasR, which can produce both average methylation frequency and single molecule methylation matrices (reads x positions with 1s/0s indicating methylation status). However QuasR uses Bowtie (v1?) for mapping, which is not the best mapper. Also in bisulfite mode it only considers reads in the FR orientation. Since some libraries seem to map extremely poorly with QuasR (only 10% of reads), we developed a new pipeline with <a href="https://github.com/brentp/bwa-meth">bwa-meth</a> to align the reads and <a href="https://github.com/dpryan79/MethylDackel">MethylDackel</a> to call methylation frequency at both CpG and GpC motifs. To get single molecule methylation matrices we used samtools mpileup to call variants. The methMatrix package contains scripts to parse the output of mpileup, to get methylation matrices for each motif. There are also functions to combine the CG and GC matrices, and then work with them.</p>
+
+<h2>Prerequisites</h2>
+
+<p>Getting single read matrices requires: 
+1) Bed files with the position of motifs.
+2) Bam file with the reads. 
+3) GRanges object with the region of interest.
+4) GRanges object with unique non-overlapping CG and GC motifs in the genome</p>
+
+<p>The bed files can be created from a file containing the genomic sequence. So first we read in the paths to the genome sequence, the bam file and regions of interest.</p>
+
+<pre><code class="r">#genomeFile=&quot;/Users/semple/Documents/MeisterLab/GenomeVer/sequence/c_elegans.PRJNA13758.WS250.genomic.fa&quot;
+#bamFile=&quot;/Users/semple/Documents/MeisterLab/sequencingData/20190218_dSMFv016v020_N2gw_2x150pe/properpair/aln/dS16N2gw_20190218.noOL.bam&quot;
+bamFile&lt;-system.file(&quot;extdata&quot;, &quot;aln/dS03-N2_20181119.noOL.bam&quot;,
+                       package=&quot;methMatrix&quot;,mustWork=TRUE)
+genomeFile&lt;-system.file(&quot;extdata&quot;,
+                          &quot;genome/c_elegans.PRJNA13758.WS250.genomic_Xchr.fa&quot;,
+                          package=&quot;methMatrix&quot;,mustWork=TRUE)
+amplicons&lt;-readRDS(system.file(&quot;extdata&quot;, &quot;genome/ampliconGR.RDS&quot;,
+                         package=&quot;methMatrix&quot;, mustWork=TRUE))
+#amplicons=readRDS(&quot;/Users/semple/Documents/MeisterLab/dSMF/PromoterPrimerDesign/usefulObjects/ampliconGR.RDS&quot;)
+names(GenomicRanges::mcols(amplicons))&lt;-&quot;ID&quot;
+GenomeInfoDb::seqlevelsStyle(amplicons)&lt;-&quot;ensembl&quot;
+regionGR&lt;-amplicons[1]
+</code></pre>
+
+<p>To create the bed files with the CG or GC motifs, use the function <strong>makeCGorGCbed</strong>.</p>
+
+<pre><code class="r">makeCGorGCbed(genomeFile,&quot;CG&quot;)
+makeCGorGCbed(genomeFile,&quot;GC&quot;)
+</code></pre>
+
+<p>These will save a bed file for that motif to the same directory as the genome file. Then in future one just needs to give the path to these files.</p>
+
+<pre><code class="r">#bedFileCG=&quot;/Users/semple/Documents/MeisterLab/GenomeVer/sequence/c_elegans.PRJNA13758.WS250.genomic.CG.bed&quot;
+bedFileCG&lt;-system.file(&quot;extdata&quot;,
+                       &quot;genome/c_elegans.PRJNA13758.WS250.genomic_Xchr.CG.bed&quot;,
+                       package=&quot;methMatrix&quot;,mustWork=TRUE)
+#bedFileGC=&quot;/Users/semple/Documents/MeisterLab/GenomeVer/sequence/c_elegans.PRJNA13758.WS250.genomic.GC.bed&quot;
+bedFileGC&lt;-system.file(&quot;extdata&quot;,
+                       &quot;genome/c_elegans.PRJNA13758.WS250.genomic_Xchr.GC.bed&quot;,
+                       package=&quot;methMatrix&quot;,mustWork=TRUE)
+</code></pre>
+
+<p>One also has to create a GRanges object with a list of unique, non-overlapping CG and GC motifs in the genome. This can be done with the <strong>nanodsmf::findGenomeMotifs</strong> function, and then saved as an RDS. Note that this function takes a long time to run (3.5h on the C. elegans genome, for example)!</p>
+
+<pre><code class="r">genomeMotifGR&lt;-nanodsmf::findGenomeMotifs(genomeFile)
+</code></pre>
+
+<p>Once the RDS is saved it can be loaded for all future analyses.</p>
+
+<pre><code class="r">#genomeMotifGR&lt;-readRDS(&quot;/Users/semple/Documents/MeisterLab/GenomeVer/sequence/c_elegans.PRJ#NA13758.WS250.genomic.CGGC_motifs.RDS&quot;)
+genomeMotifGR&lt;-readRDS(system.file(&quot;extdata&quot;,
+              &quot;genome/c_elegans.PRJNA13758.WS250.genomic_Xchr.CGGC_motifs.RDS&quot;,
+                      package=&quot;methMatrix&quot;, mustWork=TRUE))
+</code></pre>
+
+<p>Note that getting a unique, non-overlapping list of CG and GC motifs requires some manipulation, since triplet motifs such as GCG or CGC and longer runs CGCG.. or GCGC&hellip; will have multiple overlapping CG and GC motifs within them. To deal with this we treat isolated triplets as a single motif. Longer runs of CGCG.. or GCGC&hellip; are artifically split. If their length is even, they are split into doublets and if their length is odd, one triplet is split off and the rest is split into doublets. Unlike NOME-seq, where you might want to distinguish between CG and GC motifs because they convey different types of information (and therefore GCG motifs are discarded), in DSMF, both motifs give an indication of DNA accessibility, therefore this approach allows simplification of the data without loss of overlapping sites.</p>
+
+<h2>Extracting methylation matrix from bam file</h2>
+
+<p>Use the <strong>getReadMatrix</strong> to extract methylation status in each read for a specific motif. Each motif is performed separately. The matrices will contain reads as rows and C positions as columns. </p>
+
+<pre><code class="r">matCG&lt;-getReadMatrix(bamFile=bamFile,genomeFile=genomeFile,bedFile=bedFileCG,region=regionGR, samtoolsPath=&quot;/Applications/anaconda3/bin/&quot;)
+matGC&lt;-getReadMatrix(bamFile,genomeFile,bedFileGC,regionGR,samtoolsPath=&quot;/Applications/anaconda3/bin/&quot;)
+
+matCG[2:5,18:26]
+</code></pre>
+
+<pre><code>##                                               8069559 8069564 8069565 8069599
+## M02442:245:000000000-C5LKB:1:1101:11219:26350       1       0       1       0
+## M02442:245:000000000-C5LKB:1:1101:12625:13682      NA      NA      NA      NA
+## M02442:245:000000000-C5LKB:1:1101:13549:26394       0       0       0       0
+## M02442:245:000000000-C5LKB:1:1101:13980:22059       1       0       1       0
+##                                               8069600 8069610 8069611 8069617
+## M02442:245:000000000-C5LKB:1:1101:11219:26350       1       0       1       0
+## M02442:245:000000000-C5LKB:1:1101:12625:13682      NA      NA      NA      NA
+## M02442:245:000000000-C5LKB:1:1101:13549:26394       0       0       0       0
+## M02442:245:000000000-C5LKB:1:1101:13980:22059       1       0       1       0
+##                                               8069618
+## M02442:245:000000000-C5LKB:1:1101:11219:26350       0
+## M02442:245:000000000-C5LKB:1:1101:12625:13682      NA
+## M02442:245:000000000-C5LKB:1:1101:13549:26394       0
+## M02442:245:000000000-C5LKB:1:1101:13980:22059       1
+</code></pre>
+
+<pre><code class="r">matGC[2:5,8:16]
+</code></pre>
+
+<pre><code>##                                               8069484 8069519 8069520 8069652
+## M02442:245:000000000-C5LKB:1:1101:11219:26350       0       1       0       0
+## M02442:245:000000000-C5LKB:1:1101:12625:13682       0      NA      NA      NA
+## M02442:245:000000000-C5LKB:1:1101:13549:26394       0       0       0       0
+## M02442:245:000000000-C5LKB:1:1101:13980:22059       0       1       0       0
+##                                               8069653 8069666 8069667 8069694
+## M02442:245:000000000-C5LKB:1:1101:11219:26350       0       0       0       1
+## M02442:245:000000000-C5LKB:1:1101:12625:13682      NA      NA      NA      NA
+## M02442:245:000000000-C5LKB:1:1101:13549:26394       0       0       0       1
+## M02442:245:000000000-C5LKB:1:1101:13980:22059       0       0       0       1
+##                                               8069695
+## M02442:245:000000000-C5LKB:1:1101:11219:26350       0
+## M02442:245:000000000-C5LKB:1:1101:12625:13682      NA
+## M02442:245:000000000-C5LKB:1:1101:13549:26394       0
+## M02442:245:000000000-C5LKB:1:1101:13980:22059       0
+</code></pre>
+
+<p>This are very sparse matrices because forward and reverse reads will have C calls in different positions even within the same motif (C is shifted by 1 between the two strands). To simplify the data and get a more workable matrix we perform the following steps: </p>
+
+<p>1) The data is &ldquo;destranded&rdquo; by taking an average of the methylation call at both positions within a motif. To do this, NAs are ignored and average of the call at both positions in a motif (or all three in the case of a triplet) is calculated for each read. Motif positions that had only NAs are called as NAs.</p>
+
+<p>2) To combine CG and GC matrices, positions that overlap between both matrices (GCGorCGC motifs will be called in both matrices) need to be dealt with. Again, the average of methylation calls for any read at a given motif is caclulated from both matrices while ignoring NAs. If all positions are NAs, they are scored as NAs. </p>
+
+<p>3) The averaged overlapping motifs are combined with unique motifs from each matrix into a single matrix</p>
+
+<p>4) The motifs are reduced to a single bp as follows: CG motifs take the position of the first bp in the motif, GC motifs take the position of the second bp in the motif, and GCGorCGC motifs take the position of the third bp in the motif. </p>
+
+<p>The output of the <strong>combineCGandGCmatrices</strong> function is a single matrix with reads as rows and C positions within unique, non-overlapping CG, GC or GCGorCGC motifs as columns. The matrix contains values between 0 (non methylated) and 1 (methylated), as well as NAs for positions without a methylation call.</p>
+
+<pre><code class="r">methMat&lt;-combineCGandGCmatrices(matCG,matGC,regionGR,genomeMotifGR)
+methMat[2:5,10:18]
+</code></pre>
+
+<pre><code>##                                               8069530 8069549 8069558 8069564
+## M02442:245:000000000-C5LKB:1:1101:11219:26350       1       1       1       1
+## M02442:245:000000000-C5LKB:1:1101:12625:13682      NA      NA      NA      NA
+## M02442:245:000000000-C5LKB:1:1101:13549:26394       0       0       0       0
+## M02442:245:000000000-C5LKB:1:1101:13980:22059       1       1       1       1
+##                                               8069599 8069610 8069617 8069631
+## M02442:245:000000000-C5LKB:1:1101:11219:26350       1       1       0       0
+## M02442:245:000000000-C5LKB:1:1101:12625:13682      NA      NA      NA      NA
+## M02442:245:000000000-C5LKB:1:1101:13549:26394       0       0       0       0
+## M02442:245:000000000-C5LKB:1:1101:13980:22059       1       1       1       1
+##                                               8069645
+## M02442:245:000000000-C5LKB:1:1101:11219:26350       0
+## M02442:245:000000000-C5LKB:1:1101:12625:13682      NA
+## M02442:245:000000000-C5LKB:1:1101:13549:26394       0
+## M02442:245:000000000-C5LKB:1:1101:13980:22059       1
+</code></pre>
+
+<pre><code class="r">colSums(methMat,na.rm=T)
+</code></pre>
+
+<pre><code>## 8069424 8069426 8069431 8069443 8069453 8069472 8069483 8069498 8069520 8069530 
+##   241.0   191.5   240.0   261.0   406.0   395.0   217.0   440.0   345.0   454.0 
+## 8069549 8069558 8069564 8069599 8069610 8069617 8069631 8069645 8069653 8069667 
+##   440.0   478.0   460.0   462.0   465.0   452.0   448.0   373.0   299.0   258.0 
+## 8069670 8069674 8069695 8069723 8069756 
+##   420.0   433.0   259.0   491.0   476.0
+</code></pre>
+
+<p>This methylation matrix has more the look of a standard methylation matrix with consecutive sites having methylation scores, though the reads here are a bit short (2x100bp).</p>
+
+<h1>Manipulating matrices to relative coordinates</h1>
+
+<p>The initial matrices can be converted from absolute genomic coordinates to coordinates relative to a reference point, like a transcription start site (TSS). First methylation data should be extracted from bam file with genomic ranges specifying the feature. These will be expanded to specify a window around the feature e.g +-250bp. We will load such matrices with genomic coordinates. The matrix files must all be listed in a csv file under the column heading &ldquo;filename&rdquo;. </p>
+
+<pre><code class="r"># read in the table with the list of matrix files
+matTableFile&lt;-system.file(&quot;extdata&quot;, &quot;csv/MatrixLog_ampTSS.csv&quot;,
+                          package=&quot;methMatrix&quot;, mustWork=TRUE)
+matTable&lt;-read.csv(matTableFile,stringsAsFactors=F)
+
+# modify the matTable path to data
+matTable$filename &lt;- system.file(&quot;extdata&quot;, 
+                      gsub(&quot;^.*/rds/&quot;,&quot;rds/&quot;, 
+                           matTable[,&quot;filename&quot;]), 
+                      package=&quot;methMatrix&quot;, mustWork=TRUE)
+
+# read in one matrix
+i=2
+dataMatrix&lt;-readRDS(matTable[i,&quot;filename&quot;])
+
+# read in the genomic ranges for TSSs
+tssFile&lt;-system.file(&quot;extdata&quot;,&quot;genome/ampliconMaxTSSgr.RDS&quot;,
+                     package=&quot;methMatrix&quot;,mustWork=TRUE)
+tssWin&lt;-readRDS(tssFile)
+names(GenomicRanges::mcols(tssWin))&lt;-&quot;ID&quot;
+idx&lt;-match(unique(matTable$region),tssWin$ID)
+tssWin&lt;-tssWin[idx]
+#saveRDS(tssWin,&quot;./inst/extData/genome/TSSgr.RDS&quot;)
+
+regionType&lt;-&quot;TSS&quot;
+winSize&lt;-500
+
+matTableFile&lt;-system.file(&quot;extdata&quot;, 
+                          &quot;csv/MatrixLog_relCoord_ampTSS.csv&quot;,
+                          package=&quot;methMatrix&quot;, mustWork=TRUE)
+matTable&lt;-read.csv(matTableFile,stringsAsFactors=F)
+matTable$filename &lt;-system.file(&quot;extdata&quot;, gsub(&quot;^\\./&quot;,&quot;&quot;,matTable[,&quot;filename&quot;]), package=&quot;methMatrix&quot;, mustWork=TRUE)
+
+allSampleRelCoordMats&lt;-getRelativeCoordMats(matList=matTable,
+                                            regionGRs=tssWin,
+                                            regionType=regionType, 
+                                            anchorCoord=winSize/2)
+</code></pre>
+
+<pre><code>##     sample         region
+## 1 dS02-182 WBGene00015947
+##     sample         region
+## 2 dS02-182 WBGene00015955
+##     sample         region
+## 3 dS02-182 WBGene00009620
+##     sample         region
+## 4 dS02-182 WBGene00009621
+##     sample         region
+## 5 dS02-182 WBGene00009801
+##    sample         region
+## 6 dS03-N2 WBGene00015947
+##    sample         region
+## 7 dS03-N2 WBGene00015955
+##    sample         region
+## 8 dS03-N2 WBGene00009620
+##    sample         region
+## 9 dS03-N2 WBGene00009621
+##     sample         region
+## 10 dS03-N2 WBGene00009801
+</code></pre>
+
+<pre><code class="r">TSSrelCoord&lt;-convertGRtoRelCoord(tssWin,1,anchorPoint=&quot;middle&quot;)
+tssWinRelCoord&lt;-convertGRtoRelCoord(tssWin,winSize,anchorPoint=&quot;middle&quot;)
+
+minConversionRate=0.8
+maxNAfraction=0.2
+seqDate=&quot;&quot;
+plotAllMatrices(allSampleRelCoordMats, samples, regionGRs=tssWinRelCoord,  
+                featureGRs=TSSrelCoord, featureLabel=&quot;TSS&quot;, 
+                regionType=regionType,
+                maxNAfraction=maxNAfraction, withAvr=FALSE,
+                includeInFileName=seqDate, drawArrow=FALSE)
+</code></pre>
+
+<pre><code>## [1] &quot;plotting WBGene00015947&quot;
+</code></pre>
+
+<pre><code>## Warning: Removed 32025 rows containing missing values (geom_tile).
+</code></pre>
+
+<pre><code>## Warning: Removed 13250 rows containing missing values (geom_tile).
+</code></pre>
+
+<pre><code>## [1] &quot;plotting WBGene00015955&quot;
+</code></pre>
+
+<pre><code>## Warning: Removed 6732 rows containing missing values (geom_tile).
+</code></pre>
+
+<pre><code>## Warning: Removed 2109 rows containing missing values (geom_tile).
+</code></pre>
+
+<pre><code>## [1] &quot;plotting WBGene00009620&quot;
+</code></pre>
+
+<pre><code>## Warning: Removed 78182 rows containing missing values (geom_tile).
+</code></pre>
+
+<pre><code>## Warning: Removed 26055 rows containing missing values (geom_tile).
+</code></pre>
+
+<pre><code>## [1] &quot;plotting WBGene00009621&quot;
+</code></pre>
+
+<pre><code>## Warning: Removed 575 rows containing missing values (geom_tile).
+</code></pre>
+
+<pre><code>## Warning: Removed 2232 rows containing missing values (geom_tile).
+</code></pre>
+
+<pre><code>## [1] &quot;plotting WBGene00009801&quot;
+</code></pre>
+
+<pre><code>## Warning: Removed 21672 rows containing missing values (geom_tile).
+</code></pre>
+
+<pre><code>## Warning: Removed 5775 rows containing missing values (geom_tile).
+</code></pre>
+
+</body>
+
+</html>
