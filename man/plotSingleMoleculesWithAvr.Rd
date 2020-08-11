@@ -14,7 +14,10 @@ plotSingleMoleculesWithAvr(
   drawArrow = TRUE,
   title = NULL,
   baseFontSize = 11,
-  maxNAfraction = 0.2
+  maxNAfraction = 0.2,
+  segmentSize = 3,
+  colourChoice = list(low = "blue", mid = "white", high = "red", bg = "white", lines =
+    "grey80")
 )
 }
 \arguments{
@@ -41,6 +44,11 @@ the region is present)}
 \item{baseFontSize}{The base font for the plotting theme (default=11 works well for 4x plots per A4 page)}
 
 \item{maxNAfraction}{Maximual fraction of CpG/GpC positions that can be undefined (default=0.2)}
+
+\item{segmentSize}{Length of colour segment denoting methylation site}
+
+\item{colourChoice}{A list of colours for colour pallette. Must include
+values for "low", "mid", "high" and "bg" (background) and "lines".}
 }
 \value{
 A ggplot2 plot object
