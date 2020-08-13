@@ -495,6 +495,10 @@ makeDirs<-function(path,dirNameList=c()) {
 #' @param genomeMotifGR A GenomicRanges object with a unique set of non-overlapping CG, GC and GCGorCGC sites
 #' @param minConversionRate Minimal fraction of Cs from a non-methylation context that must be converted to Ts for the read to be included in the final matrix (default=0.8)
 #' @param maxNAfraction Maximual fraction of CpG/GpC positions that can be undefined (default=0.2)
+#' Note that since making the matrix is a time-consuming process, the reads are
+#' not removed from the matrix using this threshold, so that a different
+#' threshold can be used at a later time, but it is used to give an idea of the
+#' read quality in the summary table of the matrices.
 #' @param bedFilePrefix The full path and prefix of the bed file for C, G, CG and GC positions in the genome (i.e path and name of the file without the ".C.bed",".G.bed", ".CG.bed" or ".GC.bed" suffix). Defulat is NULL and assumes the bed file are in the same location as the genome sequence file.
 #' @param path Path for output. "plots", "csv" and "rds" directories will be created here. Default is current directory.
 #' @param convRatePlots Boolean value: should bisulfite conversion rate plots be created for each region? (default=FALSE)
@@ -631,6 +635,7 @@ getSingleMoleculeMatrices<-function(sampleTable, genomeFile, regionGRs,
                           units="cm")
             conversionRatePlots<-c(conversionRatePlots,plotName)
           }
+
           # count reads that do not cover at least 1-maxNAfraction of the cytosines
           logLine[1,"fewNAreads"]<-sum(rowMeans(is.na(methMat))<maxNAfraction)
           sink(type="message")
