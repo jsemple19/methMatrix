@@ -17,7 +17,9 @@ plotSingleMoleculesWithAvr(
   maxNAfraction = 0.2,
   segmentSize = 3,
   colourChoice = list(low = "blue", mid = "white", high = "red", bg = "white", lines =
-    "grey80")
+    "grey80"),
+  colourScaleMidpoint = 0.5,
+  doClustering = T
 )
 }
 \arguments{

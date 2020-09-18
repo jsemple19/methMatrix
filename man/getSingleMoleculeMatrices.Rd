@@ -33,7 +33,11 @@ getSingleMoleculeMatrices(
 
 \item{minConversionRate}{Minimal fraction of Cs from a non-methylation context that must be converted to Ts for the read to be included in the final matrix (default=0.8)}
 
-\item{maxNAfraction}{Maximual fraction of CpG/GpC positions that can be undefined (default=0.2)}
+\item{maxNAfraction}{Maximual fraction of CpG/GpC positions that can be undefined (default=0.2)
+Note that since making the matrix is a time-consuming process, the reads are
+not removed from the matrix using this threshold, so that a different
+threshold can be used at a later time, but it is used to give an idea of the
+read quality in the summary table of the matrices.}
 
 \item{bedFilePrefix}{The full path and prefix of the bed file for C, G, CG and GC positions in the genome (i.e path and name of the file without the ".C.bed",".G.bed", ".CG.bed" or ".GC.bed" suffix). Defulat is NULL and assumes the bed file are in the same location as the genome sequence file.}
 

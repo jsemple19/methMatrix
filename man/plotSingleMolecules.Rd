@@ -17,7 +17,9 @@ plotSingleMolecules(
   maxNAfraction = 0.2,
   segmentSize = 3,
   colourChoice = list(low = "blue", mid = "white", high = "red", bg = "white", lines =
-    "black")
+    "black"),
+  colourScaleMidpoint = 0.5,
+  doClustering = T
 )
 }
 \arguments{
