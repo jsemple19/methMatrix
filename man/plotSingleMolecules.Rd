@@ -51,6 +51,10 @@ the region is present)}
 
 \item{colourChoice}{A list of colours for colour pallette. Must include
 values for "low", "mid", "high" and "bg" (background) and "lines".}
+
+\item{colourScaleMidpoint}{Numerical value for middle of colour scale. Useful for Nanopore data where a particular threshold other than 0.5 is used to distinguish methylated from non-methylated sites. (default=0.5).}
+
+\item{doClustering}{Boolean value to determine if reads should be clustered with heirarchical clustering before plotting (default=T).}
 }
 \value{
 A ggplot2 plot object

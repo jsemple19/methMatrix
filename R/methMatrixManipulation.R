@@ -204,6 +204,8 @@ getMetaMethFreq<-function(matList,regionGRs,minReads=50) {
 #' @param segmentSize Length of colour segment denoting methylation site
 #' @param colourChoice A list of colours for colour pallette. Must include
 #' values for "low", "mid", "high" and "bg" (background) and "lines".
+#' @param colourScaleMidpoint Numerical value for middle of colour scale. Useful for Nanopore data where a particular threshold other than 0.5 is used to distinguish methylated from non-methylated sites. (default=0.5).
+#' @param doClustering Boolean value to determine if reads should be clustered with heirarchical clustering before plotting (default=T).
 #' @return A ggplot2 plot object
 #' @export
 plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs=NULL,
@@ -260,7 +262,7 @@ plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs=NULL,
                    " ", strandInfo)
     }
 
-    scaleFactor<-(width(regionGR)/500)
+    scaleFactor<-(GenomicRanges::width(regionGR)/500)
 
     p<-ggplot2::ggplot(d,ggplot2::aes(x=position,y=molecules)) +
       ggplot2::geom_tile(ggplot2::aes(width=segmentSize*scaleFactor,
@@ -334,6 +336,8 @@ plotSingleMolecules<-function(mat,regionName, regionGRs, featureGRs=NULL,
 #' @param segmentSize Length of colour segment denoting methylation site
 #' @param colourChoice A list of colours for colour pallette. Must include
 #' values for "low", "mid", "high" and "bg" (background) and "lines".
+#' @param colourScaleMidpoint Numerical value for middle of colour scale. Useful for Nanopore data where a particular threshold other than 0.5 is used to distinguish methylated from non-methylated sites. (default=0.5).
+#' @param doClustering Boolean value to determine if reads should be clustered with heirarchical clustering before plotting (default=T).
 #' @return A ggplot2 plot object
 #' @export
 plotSingleMoleculesWithAvr<-function(mat, regionName, regionGRs, featureGRs,
@@ -363,7 +367,7 @@ plotSingleMoleculesWithAvr<-function(mat, regionName, regionGRs, featureGRs,
     mat[na.matrix]<-NA
     if (class(hc) == "try-error" | !doClustering ) {
       df<-as.data.frame(mat,stringsAsFactors=F)
-      print("hclust failed. Matrix dim: ")
+      print("hclust not performed. Matrix dim: ")
       print(dim(mat))
     } else {
       df<-as.data.frame(mat[hc$order,],stringsAsFactors=F)
@@ -381,17 +385,22 @@ plotSingleMoleculesWithAvr<-function(mat, regionName, regionGRs, featureGRs,
                          paste0(GenomicRanges::strand(regionGR),"ve strand"))
       title=paste0(regionName, ": ",GenomicRanges::seqnames(regionGR)," ",strandInfo)
     }
-    dAvr<-data.frame(position=as.numeric(colnames(df)),dSMF=1-colSums(df,na.rm=T)/length(reads))
+
+    scaleFactor<-(GenomicRanges::width(regionGR)/500)
+
+    dAvr<-data.frame(position=as.numeric(colnames(df)),
+                     dSMF=1-colSums(df>=colourScaleMidpoint,
+                                    na.rm=T)/length(reads))
     # average plot
     p1<-ggplot2::ggplot(dAvr,ggplot2::aes(x=position,y=dSMF,group=1)) +
-      ggplot2::geom_point()+
+      ggplot2::geom_point(size=1/scaleFactor)+
       ggplot2::geom_line(size=1,show.legend=F) +
       ggplot2::guides(fill=FALSE, color=FALSE) +
       ggplot2::theme_light(base_size=baseFontSize) +
       ggplot2::ylab("Mean dSMF") +
       ggplot2::theme(axis.title.x = ggplot2::element_blank(),
                      axis.text.x = ggplot2::element_blank(),
-                     plot.background = ggplot2::element_rect(colour=colourChoice$bg)) +
+                     plot.background = ggplot2::element_rect(colour="white")) +
       ggplot2::ylim(0,1) +
       ggplot2::xlim(GenomicRanges::start(regionGR),GenomicRanges::end(regionGR)+20)
     if (!is.null(featureGRs)) { # plot feature if present
@@ -401,17 +410,17 @@ plotSingleMoleculesWithAvr<-function(mat, regionName, regionGRs, featureGRs,
       if (drawArrow==TRUE) {
         p1<-p1+ggplot2::annotate("segment", x = GenomicRanges::start(featGR),
                               xend = GenomicRanges::start(featGR)+
-                                20*ifelse(GenomicRanges::strand(featGR)=="-",-1,1),
+                                20*scaleFactor*ifelse(GenomicRanges::strand(featGR)=="-",-1,1),
                               y = 1, yend = 1, colour = colourChoice$lines, size=0.7,
                               arrow=ggplot2::arrow(length = ggplot2::unit(0.2, "cm")))
       }
     }
     #single molecule plot
-    p2<-ggplot2::ggplot(d,ggplot2::aes(x=position,y=molecules,width=2)) +
-      ggplot2::geom_tile(ggplot2::aes(width=segmentSize,fill=methylation),alpha=0.8) +
+    p2<-ggplot2::ggplot(d,ggplot2::aes(x=position,y=molecules)) +
+      ggplot2::geom_tile(ggplot2::aes(width=segmentSize*scaleFactor,fill=methylation),alpha=0.8) +
       ggplot2::scale_fill_gradient2(low=colourChoice$low, mid=colourChoice$mid,
                                     high=colourChoice$high, midpoint=colourScaleMidpoint,
-                                    na.value="transparent",
+                                    na.value=colourChoice$bg,
                                    breaks=c(0,1), labels=c("protected","accessible"),
                                    limits=c(0,1), name="dSMF\n\n") +
       ggplot2::theme_light(base_size=baseFontSize) +
@@ -432,15 +441,15 @@ plotSingleMoleculesWithAvr<-function(mat, regionName, regionGRs, featureGRs,
                                      col=colourChoice$lines) +
              ggplot2::annotate(geom="text", x=GenomicRanges::start(featGR),
                                y=-max(2,0.03*length(reads)),
-                          label=featureLabel, color="black")
+                          label=featureLabel, color=colourChoice$lines)
 
         if (drawArrow==TRUE) {
           p2<-p2+ggplot2::annotate("segment", x = GenomicRanges::start(featGR),
                                  xend = GenomicRanges::start(featGR)+
-                                   20*ifelse(GenomicRanges::strand(featGR)=="-",-1,1),
+                                   20*scaleFactor*ifelse(GenomicRanges::strand(featGR)=="-",-1,1),
                                  y = length(reads)+max(3,0.04*length(reads)),
                                  yend =length(reads)+max(3,0.04*length(reads)),
-                                 colour = "black", size=0.7,
+                                 colour = colourChoice$lines, size=0.7,
                                  arrow=ggplot2::arrow(length = ggplot2::unit(0.3, "cm")))
         }
     }
