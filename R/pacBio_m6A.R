@@ -7,14 +7,17 @@
 #' Processes data from bed file that is the output of
 #' Andrew Stergachis fiberseq scripts where each row is a
 #' fiber and the final columns indicate methylated positions
-#' in that fiber
+#' in that fiber. Output is: 1) the original GRanges with all invalide fibers removed
+#' and with additional column denoting fraction methylation, 2) A new GRanges
+#' with all valid A/T postions and their fraction methylation.
 #' @param bedGR GRanges object of fiberseq output (bed) imported into R
 #' @param genome BSgenome object for your organism with UCSC style seqinfo
 #' @param ATpositionGR GRanges object with position of all As and Ts in genome
 #' @param minSubreadCov Minimum coverage of the read with subreads (default=10)
 #' @param minReadCov Minimum read coverage per genomic position (default=5)
-#' @return GRanges with score column containing % methylation
-#' along genome
+#' @return List of two GRanges: The first is the original bedGR but with additonal
+#' metadata columns for fraction methylation per fiber. The second contains all the
+#' A/T sites along the genome for which a valid fraction methylation could be calculated.
 #' @export
 fiberseqBedToBigwig<-function(bedGR,
                 genome=BSgenome.Celegans.UCSC.ce11::Celegans,
