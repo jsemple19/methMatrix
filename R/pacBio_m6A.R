@@ -1,6 +1,9 @@
 ###### Functions to create matrices from fiber-seq m6A data #########
 ## Paper: https://www.science.org/doi/10.1126/science.aaz1646
+bedfile<-"/Users/semple/Documents/MeisterLab/otherPeopleProjects/m6A/m64293e_220113_143223.bc1001_sorted_pruned.bed"
 
+print("Importing bedfile data... (may take a while)")
+bedGR<-rtracklayer::import(bedfile)
 
 #' Convert fiberseq bed file to bigwig
 #'
@@ -17,9 +20,12 @@
 #' along genome
 #' @export
 fiberseqBedToBigwig<-function(bedGR,
-                            genome=BSgenome.Celegans.UCSC.ce11::Celegans,
-                            ATpositionGR=NULL,minSubreadCov=10){
+                genome=BSgenome.Celegans.UCSC.ce11::Celegans,
+                ATpositionGR=NULL,
+                minSubreadCov=10,
+                minReadCov=5){
   print("Extracting methylation position data...")
+  bedGR<-bedGR[bedGR$score>=minSubreadCov]
   # use blck widths (0 or 1) to get length of vector of 1s per fiber
   blcks<-unlist(bedGR$blocks)
   blckrle<-rle(IRanges::width(blcks))
@@ -81,8 +87,8 @@ fiberseqBedToBigwig<-function(bedGR,
   print(paste0(sum(idx)," AT positions are NA"))
   atfracMe<-atfracMe[!is.na(atfracMe$fracMe)]
 
-  GenomeInfoDb::seqinfo(atfracMe)<-GenomeInfoDb::seqinfo(genome)
-  return(atfracMe)
+  #GenomeInfoDb::seqinfo(atfracMe)<-GenomeInfoDb::seqinfo(genome)
+  return(list(bedGR,atfracMe))
 }
 
 #' Make GRanges object of all As and Ts in genome
