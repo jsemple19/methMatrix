@@ -74,7 +74,6 @@ fiberseqBedToBigwig<-function(bedGR,
   #look at percentage of positions methylated per fiber
   bedGR$totalAT<-GenomicRanges::countOverlaps(bedGR,ATpositionGR)
   bedGR$fracMePerFiber<-blcklengths/bedGR$totalAT
-  hist(bedGR$fracMePerFiber,breaks=100,xlim=c(0,1))
   # TODO: filter out fibers with > 20-30% methylation?
 
   # remove regions that have less the minReadCov reads
