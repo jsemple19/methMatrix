@@ -1,9 +1,6 @@
 ###### Functions to create matrices from fiber-seq m6A data #########
 ## Paper: https://www.science.org/doi/10.1126/science.aaz1646
-bedfile<-"/Users/semple/Documents/MeisterLab/otherPeopleProjects/m6A/m64293e_220113_143223.bc1001_sorted_pruned.bed"
 
-print("Importing bedfile data... (may take a while)")
-bedGR<-rtracklayer::import(bedfile)
 
 #' Convert fiberseq bed file to bigwig
 #'
