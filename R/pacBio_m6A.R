@@ -11,7 +11,8 @@
 #' and with additional column denoting fraction methylation, 2) A new GRanges
 #' with all valid A/T postions and their fraction methylation.
 #' @param bedGR GRanges object of fiberseq output (bed) imported into R
-#' @param genome BSgenome object for your organism with UCSC style seqinfo
+#' @param genome BSgenome object for your organism with UCSC style seqinfo (Default
+#' is C. elegans ce11)
 #' @param ATpositionGR GRanges object with position of all As and Ts in genome
 #' @param minSubreadCov Minimum coverage of the read with subreads (default=10)
 #' @param minReadCov Minimum read coverage per genomic position (default=5)
