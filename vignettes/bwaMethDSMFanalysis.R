@@ -43,8 +43,8 @@ genomeMotifGR<-readRDS(system.file("extdata",
                       package="methMatrix", mustWork=TRUE))
 
 ## -----------------------------------------------------------------------------
-matCG<-getReadMatrix(bamFile=bamFile,genomeFile=genomeFile,bedFile=bedFileCG,region=regionGR, samtoolsPath="/Applications/anaconda3/bin/")
-matGC<-getReadMatrix(bamFile,genomeFile,bedFileGC,regionGR,samtoolsPath="/Applications/anaconda3/bin/")
+matCG<-getReadMatrix(bamFile=bamFile,genomeFile=genomeFile,bedFile=bedFileCG,region=regionGR, samtoolsPath="~/miniconda3/bin/")
+matGC<-getReadMatrix(bamFile,genomeFile,bedFileGC,regionGR,samtoolsPath="~/miniconda3/bin/")
 
 matCG[2:5,18:26]
 matGC[2:5,8:16]

@@ -1,7 +1,7 @@
 ---
 title: "bwaMethDSMFanalysis"
 author: "Jennifer Semple"
-date: "2020-08-11"
+date: "2022-06-27"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{"Analysing bwaMeth dSMF data"} 
@@ -89,8 +89,8 @@ Use the **getReadMatrix** to extract methylation status in each read for a speci
 
 
 ```r
-matCG<-getReadMatrix(bamFile=bamFile,genomeFile=genomeFile,bedFile=bedFileCG,region=regionGR, samtoolsPath="/Applications/anaconda3/bin/")
-matGC<-getReadMatrix(bamFile,genomeFile,bedFileGC,regionGR,samtoolsPath="/Applications/anaconda3/bin/")
+matCG<-getReadMatrix(bamFile=bamFile,genomeFile=genomeFile,bedFile=bedFileCG,region=regionGR, samtoolsPath="~/miniconda3/bin/")
+matGC<-getReadMatrix(bamFile,genomeFile,bedFileGC,regionGR,samtoolsPath="~/miniconda3/bin/")
 
 matCG[2:5,18:26]
 ```

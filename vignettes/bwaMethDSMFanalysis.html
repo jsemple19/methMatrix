@@ -269,8 +269,8 @@ genomeMotifGR&lt;-readRDS(system.file(&quot;extdata&quot;,
 
 <p>Use the <strong>getReadMatrix</strong> to extract methylation status in each read for a specific motif. Each motif is performed separately. The matrices will contain reads as rows and C positions as columns. </p>
 
-<pre><code class="r">matCG&lt;-getReadMatrix(bamFile=bamFile,genomeFile=genomeFile,bedFile=bedFileCG,region=regionGR, samtoolsPath=&quot;/Applications/anaconda3/bin/&quot;)
-matGC&lt;-getReadMatrix(bamFile,genomeFile,bedFileGC,regionGR,samtoolsPath=&quot;/Applications/anaconda3/bin/&quot;)
+<pre><code class="r">matCG&lt;-getReadMatrix(bamFile=bamFile,genomeFile=genomeFile,bedFile=bedFileCG,region=regionGR, samtoolsPath=&quot;~/miniconda3/bin/&quot;)
+matGC&lt;-getReadMatrix(bamFile,genomeFile,bedFileGC,regionGR,samtoolsPath=&quot;~/miniconda3/bin/&quot;)
 
 matCG[2:5,18:26]
 </code></pre>
