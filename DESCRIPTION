@@ -27,7 +27,8 @@ Imports: GenomicRanges,
           Biostrings,
           foreach,
           doParallel,
-          parallel
+          parallel,
+          BSgenome.Celegans.UCSC.ce11
 Suggests: 
     knitr,
     rmarkdown,
