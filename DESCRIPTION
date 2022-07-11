@@ -32,4 +32,6 @@ Suggests:
     knitr,
     rmarkdown,
     testthat
+Remotes:
+  jsemple19/grangesutils
 VignetteBuilder: knitr

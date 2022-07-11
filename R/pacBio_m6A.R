@@ -27,6 +27,7 @@ fiberseqBedToBigwig<-function(bedGR,
                 minReadCov=5){
   print("Extracting methylation position data...")
   bedGR<-bedGR[bedGR$score>=minSubreadCov]
+
   # use blck widths (0 or 1) to get length of vector of 1s per fiber
   blcks<-unlist(bedGR$blocks)
   blckrle<-rle(IRanges::width(blcks))
