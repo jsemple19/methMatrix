@@ -190,7 +190,9 @@ fiberseqBedToMatrix<-function(bedGR,
   methMat[is.na(methMat)]<-0
 
   matall[rownames(methMat),colnames(methMat)]<-methMat
-
+  if(nrow(matall)<minReadCov){
+    matall<-NULL
+  }
   return(matall)
 }
 
