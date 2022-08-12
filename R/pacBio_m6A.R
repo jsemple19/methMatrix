@@ -181,16 +181,17 @@ fiberseqBedToMatrix<-function(bedGR,
   colnames(matall)<-dfall$start
 
   ol<-findOverlaps(regionGR,gr)
+  gr<-gr[subjectHits(ol)]
+  if(length(gr)<minReadCov){
+    df<-data.frame(sort(gr[subjectHits(ol)]))
+    df$methylation<-1
+    df1<-df %>% tidyr::pivot_wider(id_cols=readNames,names_from=start,values_from=methylation)
+    methMat<-as.matrix(df1[,-1])
+    row.names(methMat)<-df1$readNames
+    methMat[is.na(methMat)]<-0
 
-  df<-data.frame(sort(gr[subjectHits(ol)]))
-  df$methylation<-1
-  df1<-df %>% tidyr::pivot_wider(id_cols=readNames,names_from=start,values_from=methylation)
-  methMat<-as.matrix(df1[,-1])
-  row.names(methMat)<-df1$readNames
-  methMat[is.na(methMat)]<-0
-
-  matall[rownames(methMat),colnames(methMat)]<-methMat
-  if(nrow(matall)<minReadCov){
+    matall[rownames(methMat),colnames(methMat)]<-methMat
+  } else {
     matall<-NULL
   }
   return(matall)
