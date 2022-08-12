@@ -168,7 +168,7 @@ fiberseqBedToMatrix<-function(bedGR,
   GenomeInfoDb::seqinfo(gr)<-GenomeInfoDb::seqinfo(genome)
   gr<-GenomicRanges::trim(gr)
 
-  print("limiting to AT positions only...")
+  print("getting all AT positions...")
   # get location of AT bases
   if(is.null(ATpositionGR)){
     ATpositionGR<-makeATgrObj(genome)
@@ -182,7 +182,7 @@ fiberseqBedToMatrix<-function(bedGR,
 
   ol<-findOverlaps(regionGR,gr)
   gr<-gr[subjectHits(ol)]
-  if(length(gr)<minReadCov){
+  if(length(bedGR)<minReadCov){
     df<-data.frame(sort(gr[subjectHits(ol)]))
     df$methylation<-1
     df1<-df %>% tidyr::pivot_wider(id_cols=readNames,names_from=start,values_from=methylation)
