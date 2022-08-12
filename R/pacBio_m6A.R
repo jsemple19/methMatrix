@@ -24,7 +24,8 @@ fiberseqBedToBigwig<-function(bedGR,
                 genome=BSgenome.Celegans.UCSC.ce11::Celegans,
                 ATpositionGR=NULL,
                 minSubreadCov=10,
-                minReadCov=5){
+                minReadCov=5,
+                regionGR=NULL){
   print("Extracting methylation position data...")
   bedGR<-bedGR[bedGR$score>=minSubreadCov]
 
@@ -108,4 +109,90 @@ makeATgrObj<-function(genome=BSgenome.Celegans.UCSC.ce11::Celegans){
   GenomeInfoDb::seqinfo(ATranges1)<-GenomeInfoDb::seqinfo(genome)
   return(ATranges1)
 }
+
+
+#' Convert fiberseq bed file to bigwig
+#'
+#' Processes data from bed file that is the output of
+#' Andrew Stergachis fiberseq scripts where each row is a
+#' fiber and the final columns indicate methylated positions
+#' in that fiber. Output is: 1) the original GRanges with all invalide fibers removed
+#' and with additional column denoting fraction methylation, 2) A new GRanges
+#' with all valid A/T postions and their fraction methylation.
+#' @param bedGR GRanges object of fiberseq output (bed) imported into R
+#' @param genome BSgenome object for your organism with UCSC style seqinfo (Default
+#' is C. elegans ce11)
+#' @param ATpositionGR GRanges object with position of all As and Ts in genome
+#' @param minSubreadCov Minimum coverage of the read with subreads (default=10)
+#' @param minReadCov Minimum read coverage per genomic position (default=5)
+#' @param regionGR Genomic ranges object for region of interest
+#' @return List of two GRanges: The first is the original bedGR but with additonal
+#' metadata columns for fraction methylation per fiber. The second contains all the
+#' A/T sites along the genome for which a valid fraction methylation could be calculated.
+#' @export
+fiberseqBedToMatrix<-function(bedGR,
+                              genome=BSgenome.Celegans.UCSC.ce11::Celegans,
+                              ATpositionGR=NULL,
+                              minSubreadCov=10,
+                              minReadCov=5,
+                              regionGR=NULL){
+  print("Extracting methylation position data...")
+  if(!is.null(regionGR)){
+    ol<-findOverlaps(regionGR,bedGR,ignore.strand=T,type="within")
+    bedGR<-bedGR[subjectHits(ol)]
+  }
+  bedGR<-bedGR[bedGR$score>=minSubreadCov]
+
+  # use blck widths (0 or 1) to get length of vector of 1s per fiber
+  blcks<-unlist(bedGR$blocks)
+  blckrle<-rle(IRanges::width(blcks))
+  blcklengths<-blckrle$lengths[blckrle$values==1]
+  rm(list=c("blckrle"))
+  # remove blcks with width 0 (these just denote the first and last position on the fiber, but not methylation info)
+  blcks<-blcks[IRanges::width(blcks)==1]
+
+  #make granges, adding seqnames replicated by blcklengths
+  sn<-as.vector(GenomicRanges::seqnames(bedGR))
+  starts<-rep(GenomicRanges::start(bedGR),blcklengths)
+  readNames<-rep(bedGR$name,blcklengths)
+
+  gr<-GenomicRanges::GRanges(seqnames=rep(sn,blcklengths),
+                             ranges=IRanges::IRanges(start=IRanges::start(blcks)+starts-1,
+                                                     width=1))
+
+  gr$readNames<-readNames
+  rm(list=c("starts","sn","blcks"))
+  # get seqinfo data from genome object to be able to calculate coverage
+  GenomeInfoDb::seqlevelsStyle(gr)<-"UCSC"
+  GenomeInfoDb::seqlevels(gr)<-GenomeInfoDb::seqlevels(genome)
+  GenomeInfoDb::seqinfo(gr)<-GenomeInfoDb::seqinfo(genome)
+  gr<-GenomicRanges::trim(gr)
+
+  print("limiting to AT positions only...")
+  # get location of AT bases
+  if(is.null(ATpositionGR)){
+    ATpositionGR<-makeATgrObj(genome)
+  }
+
+  ol<-findOverlaps(ATpositionGR,regionGR)
+  dfall<-data.frame(ATpositionGR[queryHits(ol)])
+  matall<-matrix(data=0,nrow=length(bedGR),ncol=nrow(dfall))
+  rownames(matall)<-bedGR$name
+  colnames(matall)<-dfall$start
+
+  ol<-findOverlaps(regionGR,gr)
+
+  df<-data.frame(sort(gr[subjectHits(ol)]))
+  df$methylation<-1
+  df1<-df %>% tidyr::pivot_wider(id_cols=readNames,names_from=start,values_from=methylation)
+  methMat<-as.matrix(df1[,-1])
+  row.names(methMat)<-df1$readNames
+  methMat[is.na(methMat)]<-0
+
+  matall[rownames(methMat),colnames(methMat)]<-methMat
+
+  return(matall)
+}
+
+
 
