@@ -169,33 +169,43 @@ fiberseqBedToMatrix<-function(bedGR,
   gr<-GenomicRanges::trim(gr)
 
   print("getting all AT positions...")
-  # get location of AT bases
+  # get location of all AT bases
   if(is.null(ATpositionGR)){
     ATpositionGR<-makeATgrObj(genome)
   }
 
+  # make a matrix with all A/T positions in the region
   ol<-findOverlaps(ATpositionGR,regionGR)
   dfall<-data.frame(ATpositionGR[queryHits(ol)])
   matall<-matrix(data=0,nrow=length(bedGR),ncol=nrow(dfall))
   rownames(matall)<-bedGR$name
   colnames(matall)<-dfall$start
 
+  # remove any methylated positions that are not A/T
+  ol<-findOverlaps(ATpositionGR,gr)
+  gr<-gr[subjectHits(ol)]
+  # remove parts of the reads that are not within the
+  # region of interest
   ol<-findOverlaps(regionGR,gr)
   gr<-gr[subjectHits(ol)]
-  if(length(bedGR)<minReadCov){
-    df<-data.frame(sort(gr[subjectHits(ol)]))
+  if(length(bedGR)>=minReadCov){
+    # convert to dataframe and reshape to wide format
+    df<-data.frame(sort(gr))
     df$methylation<-1
     df1<-df %>% tidyr::pivot_wider(id_cols=readNames,names_from=start,values_from=methylation)
+    # convert to matrix with rownames=reads and colnames=position
     methMat<-as.matrix(df1[,-1])
     row.names(methMat)<-df1$readNames
     methMat[is.na(methMat)]<-0
-
+    #copy data into matrix with all A/T positions in the region
     matall[rownames(methMat),colnames(methMat)]<-methMat
   } else {
     matall<-NULL
   }
+  print(dim(matall))
   return(matall)
 }
+
 
 
 
