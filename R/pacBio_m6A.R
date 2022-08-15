@@ -206,6 +206,16 @@ fiberseqBedToMatrix<-function(bedGR,
   return(matall)
 }
 
+getFiberSeqMatrices<-function(sampleTable, bedGR,
+                              genome=BSgenome.Celegans.UCSC.ce11::Celegans,
+                              regionGRs,
+                              ATpositionGR=NULL,
+                              minSubreadCov=10,
+                              minReadCov=5,
+                              path=".",
+                              convRatePlots=FALSE, nThreads=1,
+                              overwriteMatrixLog=FALSE){
 
+}
 
 
