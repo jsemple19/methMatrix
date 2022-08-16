@@ -18,4 +18,4 @@
 #'
 #' @examples
 #' data(TSS)
-
+"TSS"

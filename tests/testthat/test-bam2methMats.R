@@ -21,7 +21,7 @@ testthat::test_that("getReadMatrix from bam works", {
   GenomeInfoDb::seqlevels(amplicons)<-gsub("chr","",
                                             GenomeInfoDb::seqlevels(amplicons))
   methMat<-getReadMatrix(bamFile, genomeFile, bedFile, amplicons[1],
-                samtoolsPath="/Applications/anaconda3/bin/")
+                samtoolsPath="~/miniconda3/bin/")
   testthat::expect_setequal(dim(methMat),c(742,38))
 })
 
@@ -54,7 +54,7 @@ testthat::test_that("getSingleMoleculeMatrices works", {
   matTable<-getSingleMoleculeMatrices(sampleTable, genomeFile,
                                       amplicons[c(1,10:12)],
                             "rawAmp", genomeMotifGR, path=matrixFilePath,
-                            samtoolsPath="/Applications/anaconda3/bin/",
+                            samtoolsPath="~/miniconda3/bin/",
                             convRatePlots=TRUE, nThreads=2)
   testthat::expect_setequal(matTable$fewNAreads,c(502,1075,93,275))
 })

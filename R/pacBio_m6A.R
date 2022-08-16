@@ -24,8 +24,7 @@ fiberseqBedToBigwig<-function(bedGR,
                 genome=BSgenome.Celegans.UCSC.ce11::Celegans,
                 ATpositionGR=NULL,
                 minSubreadCov=10,
-                minReadCov=5,
-                regionGR=NULL){
+                minReadCov=5){
   print("Extracting methylation position data...")
   bedGR<-bedGR[bedGR$score>=minSubreadCov]
 
@@ -93,6 +92,9 @@ fiberseqBedToBigwig<-function(bedGR,
   return(list(bedGR,atfracMe))
 }
 
+
+
+
 #' Make GRanges object of all As and Ts in genome
 #'
 #' Make GRanges object of all As and Ts, with runs of A/Ts
@@ -138,8 +140,8 @@ fiberseqBedToMatrix<-function(bedGR,
                               regionGR=NULL){
   print("Extracting methylation position data...")
   if(!is.null(regionGR)){
-    ol<-findOverlaps(regionGR,bedGR,ignore.strand=T,type="within")
-    bedGR<-bedGR[subjectHits(ol)]
+    ol<-GenomicRanges::findOverlaps(regionGR,bedGR,ignore.strand=T,type="within")
+    bedGR<-bedGR[S4Vectors::subjectHits(ol)]
   }
   bedGR<-bedGR[bedGR$score>=minSubreadCov]
 
@@ -175,19 +177,19 @@ fiberseqBedToMatrix<-function(bedGR,
   }
 
   # make a matrix with all A/T positions in the region
-  ol<-findOverlaps(ATpositionGR,regionGR)
-  dfall<-data.frame(ATpositionGR[queryHits(ol)])
+  ol<-GenomicRanges::findOverlaps(ATpositionGR,regionGR)
+  dfall<-data.frame(ATpositionGR[S4Vectors::queryHits(ol)])
   matall<-matrix(data=0,nrow=length(bedGR),ncol=nrow(dfall))
   rownames(matall)<-bedGR$name
   colnames(matall)<-dfall$start
 
   # remove any methylated positions that are not A/T
-  ol<-findOverlaps(ATpositionGR,gr)
-  gr<-gr[subjectHits(ol)]
+  ol<-GenomicRanges::findOverlaps(ATpositionGR,gr)
+  gr<-gr[S4Vectors::subjectHits(ol)]
   # remove parts of the reads that are not within the
   # region of interest
-  ol<-findOverlaps(regionGR,gr)
-  gr<-gr[subjectHits(ol)]
+  ol<-GenomicRanges::findOverlaps(regionGR,gr)
+  gr<-gr[S4Vectors::subjectHits(ol)]
   if(length(bedGR)>=minReadCov){
     # convert to dataframe and reshape to wide format
     df<-data.frame(sort(gr))
@@ -206,16 +208,16 @@ fiberseqBedToMatrix<-function(bedGR,
   return(matall)
 }
 
-getFiberSeqMatrices<-function(sampleTable, bedGR,
-                              genome=BSgenome.Celegans.UCSC.ce11::Celegans,
-                              regionGRs,
-                              ATpositionGR=NULL,
-                              minSubreadCov=10,
-                              minReadCov=5,
-                              path=".",
-                              convRatePlots=FALSE, nThreads=1,
-                              overwriteMatrixLog=FALSE){
-
-}
+# getFiberSeqMatrices<-function(sampleTable, bedGR,
+#                               genome=BSgenome.Celegans.UCSC.ce11::Celegans,
+#                               regionGRs,
+#                               ATpositionGR=NULL,
+#                               minSubreadCov=10,
+#                               minReadCov=5,
+#                               path=".",
+#                               convRatePlots=FALSE, nThreads=1,
+#                               overwriteMatrixLog=FALSE){
+#
+# }
 
 

@@ -9,8 +9,7 @@ fiberseqBedToBigwig(
   genome = BSgenome.Celegans.UCSC.ce11::Celegans,
   ATpositionGR = NULL,
   minSubreadCov = 10,
-  minReadCov = 5,
-  regionGR = NULL
+  minReadCov = 5
 )
 }
 \arguments{
