@@ -4,9 +4,10 @@ Version: 1.0
 Authors@R: c(person("Jennifer", "Semple", email = "jennifer.semple@izb.unibe.ch", role = c("aut", "cre")),
   person("Arnaud","Krebs",role=c("aut")))
 Description: Various functions to manipulate lists of lists of methylation matrices output by the dSMF pipeline. Matrices can be selected, merged, renumbered to relative positions and padded with NAs for merging matrices from different genes.
-License: MIT + file LICENSE
+License: MIT
 Encoding: UTF-8
 LazyData: true
+LazyDataCompression:xz
 RoxygenNote: 7.2.0
 Depends: R (>= 3.6)
 biocViews:
